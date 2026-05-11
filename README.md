@@ -182,5 +182,4 @@ O FlexCore já vem com o plugin **FlexCore Data Importer** — importa registros
 ---
 
 ## Licença
-
-Distribuído sob licença [MIT](LICENSE).
+Distribuído sob licença [GPLv3](LICENSE).
