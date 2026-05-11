@@ -96,6 +96,22 @@ INSERT IGNORE INTO settings (skey, sval, label, grp) VALUES
   ('theme_preset',  'default',   'Preset de tema',       'tema'),
   ('app_lang',      'pt_BR',     'Idioma padrão',        'geral');
 
+-- ── Entity Permissions ───────────────────────────────────────────────
+-- Permissões granulares por entidade e papel de usuário.
+-- Quando não há linha para uma entidade, o comportamento é irrestrito
+-- (todos os papéis podem fazer tudo — retrocompatibilidade com instâncias
+-- existentes que não configuraram permissões).
+CREATE TABLE IF NOT EXISTS entity_permissions (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  entity_id  INT NOT NULL,
+  role       ENUM('admin','editor','viewer') NOT NULL,
+  can_create TINYINT(1) DEFAULT 1,
+  can_edit   TINYINT(1) DEFAULT 1,
+  can_delete TINYINT(1) DEFAULT 0,
+  UNIQUE KEY uq_entity_role (entity_id, role),
+  FOREIGN KEY (entity_id) REFERENCES entities(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ── API Keys ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `api_keys` (
   `id`           INT AUTO_INCREMENT PRIMARY KEY,

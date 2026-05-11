@@ -55,6 +55,7 @@ $router->post('/entities/{id}/fields/{fid}/delete',     [EntityController::class
 $router->get( '/e/{slug}',            [RecordController::class, 'index']);
 $router->get( '/e/{slug}/new',        [RecordController::class, 'create']);
 $router->post('/e/{slug}/create',     [RecordController::class, 'store']);
+$router->post('/e/{slug}/set-view',   [RecordController::class, 'setView']);
 $router->get( '/e/{slug}/{id}',       [RecordController::class, 'show']);
 $router->get( '/e/{slug}/{id}/edit',  [RecordController::class, 'edit']);
 $router->post('/e/{slug}/{id}/update',[RecordController::class, 'update']);
@@ -107,4 +108,16 @@ if (
     $router->get( '/importer/run/{token}',    [$importer, 'run']);
     $router->post('/importer/run/{token}',    [$importer, 'run']);
     $router->get( '/importer/result/{token}', [$importer, 'result']);
+}
+
+// ── FlexCore Data Exporter ─────────────────────────────────────────────
+if (
+    file_exists(BASE . '/plugins/flexcore-data-exporter/ExporterController.php') &&
+    \DB::one("SELECT id FROM plugins WHERE plugin_id = 'flexcore-data-exporter' AND active = 1")
+) {
+    require_once BASE . '/plugins/flexcore-data-exporter/ExporterController.php';
+    $exporter = new \FlexCoreDataExporter\ExporterController();
+
+    $router->get( '/exporter/{slug}',      [$exporter, 'index']);
+    $router->post('/exporter/{slug}/run',  [$exporter, 'run']);
 }

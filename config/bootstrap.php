@@ -84,6 +84,7 @@ require_once BASE_BS . '/modules/Automations/AutomationEngine.php';
 // ── API ──────────────────────────────────────────────────────────────
 require_once BASE_BS . '/api/Formatters/ApiResponse.php';
 require_once BASE_BS . '/api/Middleware/ApiAuthMiddleware.php';
+require_once BASE_BS . '/api/Controllers/ApiRecordController.php';
 
 // ── BASE_PATH (usado por url(), redirect(), Router) ──────────────────
 define('BASE_PATH', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'));

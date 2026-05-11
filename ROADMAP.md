@@ -16,61 +16,79 @@ Os itens estão agrupados em três horizontes:
 
 ## Próximo (v1.1–v1.2)
 
-### API REST — completar o CRUD
+### ✅ API REST — CRUD completo _(concluído em v1.1)_
 
-A API existe com autenticação e rate limiting, mas as rotas de leitura/escrita de registros precisam ser finalizadas.
+Implementado em `api/Controllers/ApiRecordController.php`:
 
-- `GET /api/v1/entities` — lista entidades disponíveis
-- `GET /api/v1/e/{slug}` — lista registros com paginação e filtros por campo
+- `GET /api/v1/entities` — lista entidades ativas com contagem de campos e registros
+- `GET /api/v1/e/{slug}` — lista registros com paginação, busca global (`?q=`), filtro por campo (`?{slug}=valor`) e ordenação (`?sort=&dir=`)
 - `GET /api/v1/e/{slug}/{id}` — detalhe de um registro
-- `POST /api/v1/e/{slug}` — cria registro (já existe lógica no `RecordService`, só falta a rota)
+- `POST /api/v1/e/{slug}` — cria registro (delega ao `RecordService`, dispara hooks e auditoria)
 - `PUT /api/v1/e/{slug}/{id}` — atualiza registro
-- `DELETE /api/v1/e/{slug}/{id}` — exclui registro
+- `DELETE /api/v1/e/{slug}/{id}` — exclui registro (retorna 204)
 
-A rota `GET /api/docs` já existe no código (comentada em `routes.php`) — descomentá-la e conectar ao `ApiKeyController::docs()`.
+A rota `GET /api/docs` foi descomentada e está ativa.
+
+O `Router` ganhou suporte a `PUT`, `DELETE` e middleware encadeado por rota (`->middleware(...)`). O guard de sessão em `index.php` ignora rotas `/api/v1/*`.
 
 ---
 
-### Permissões granulares por entidade
+### ✅ Permissões granulares por entidade _(concluído em v1.1)_
 
-Hoje o controle de acesso é só por papel global (`admin`, `editor`, `viewer`). O próximo passo natural é permitir configurar, por entidade, quem pode criar, editar ou excluir registros.
-
+Implementado via:
 - Tabela `entity_permissions` (entity_id, role, can_create, can_edit, can_delete)
-- Guard no `RecordController` e no `RecordService`
-- UI de permissões na tela de edição de entidade
+- Guard `checkEntityPermission()` no `RecordController` (store, edit, update, destroy)
+- UI na aba "Permissões" em `/entities/{id}/edit?tab=permissoes`
+- Migration standalone em `install/migrations/001_entity_permissions.sql`
+
+Quando não há linha configurada para uma entidade, o comportamento é irrestrito (retrocompatibilidade). Admins nunca são bloqueados pelo guard.
 
 ---
 
-### Filtros avançados na listagem de registros
+### ✅ Filtros avançados na listagem de registros _(concluído em v1.1)_
 
-A listagem atual suporta busca textual simples em todos os campos. Evoluir para:
-
-- Filtros por campo específico (sidebar ou chips na listagem)
-- Filtros por tipo: igual, contém, maior que, entre datas
-- Combinação de múltiplos filtros (AND)
-- Persistência dos filtros ativos na URL (query string)
-
----
-
-### Ordenação de colunas na listagem
-
-Clicar no cabeçalho de coluna para ordenar por aquele campo (ASC/DESC). Requer ajuste no `RecordController::index()` e nas views.
+Implementado em `RecordController::index()` e `records/index.php`:
+- Sidebar colapsável com seletor de campo + operador + valor
+- 11 operadores: `eq`, `neq`, `contains`, `not_contains`, `starts_with`, `gt`, `lt`, `gte`, `lte`, `empty`, `not_empty`
+- Operadores disponíveis variam por tipo de campo (texto, número, data, checkbox, select…)
+- Filtros múltiplos combinados com AND
+- Persistência na URL via `?filters[]=fieldId:op:valor`
+- Chips dos filtros ativos com botão de remoção individual
+- Busca global `?q=` mantida em paralelo (retrocompatível)
 
 ---
 
-### Exportação de registros (CSV / Excel)
+### ✅ Ordenação de colunas na listagem _(concluído em v1.1)_
 
-Botão "Exportar" na listagem que gera um CSV dos registros filtrados. Um plugin de exportação é a abordagem ideal para não poluir o core — similar ao `flexcore-data-importer`.
+Implementado em `RecordController::index()` e na view tabela:
+- Parâmetros `?sort_field={id|created_at}&sort_dir=asc|desc` na URL
+- Cabeçalhos clicáveis com ícone ↑ ↓ ↕ indicando estado da ordenação
+- Ordenação via subconsulta ao EAV (`val_text`, `val_num` ou `val_date` conforme o tipo do campo)
+- Filtros e paginação preservados ao trocar ordenação
 
 ---
 
-### Views de entidade
+### ✅ Exportação de registros (CSV / Excel) _(concluído em v1.1)_
 
-Hoje só existe a view de tabela. Adicionar:
+Implementado como plugin `flexcore-data-exporter`:
+- Botão "⬇ Exportar" injetado na barra de ações via hook `records.list.actions`
+- Tela de configuração: seleção de formato (CSV ou Excel) e campos a exportar
+- Filtros ativos da listagem (`?q=` e `?filters[]`) são repassados à exportação
+- **CSV**: UTF-8 com BOM, separador `;`, abre corretamente no Excel
+- **Excel (.xlsx)**: gerado sem dependências externas (ZipArchive + SpreadsheetML)
+- Limite de 10.000 registros por exportação
+- Instalar: fazer upload de `flexcore-data-exporter.zip` em Plugins
 
-- **Kanban** — agrupa registros por campo `select` (ex.: status)
-- **Cards** — visualização em grid de cartões
-- Preferência salva por usuário por entidade
+---
+
+### ✅ Views de entidade _(concluído em v1.1)_
+
+Implementado em `RecordController::index()` e `records/index.php`:
+- **Tabela** — exibição padrão com cabeçalhos clicáveis para ordenação
+- **Cards** — grid de cartões com título/subtítulo/campos extras (primeiro campo = título)
+- **Kanban** — colunas geradas a partir das opções do primeiro campo `select` visível na lista
+- Preferência salva por usuário por entidade em `settings` com chave `view_pref_{userId}_{entityId}`
+- Seletor de view (☰ ⊞ ⊟) na barra de status, salvo via POST em `/e/{slug}/set-view`
 
 ---
 

@@ -22,27 +22,41 @@ class Router
     // ── Registro de rotas ─────────────────────────────────────────────
 
     /** @param callable|array $handler */
-    public function get(string $pattern, $handler): void
+    public function get(string $pattern, $handler): Route
     {
-        $this->add('GET', $pattern, $handler);
+        return $this->add('GET', $pattern, $handler);
     }
 
     /** @param callable|array $handler */
-    public function post(string $pattern, $handler): void
+    public function post(string $pattern, $handler): Route
     {
-        $this->add('POST', $pattern, $handler);
+        return $this->add('POST', $pattern, $handler);
     }
 
     /** @param callable|array $handler */
-    public function any(string $pattern, $handler): void
+    public function put(string $pattern, $handler): Route
     {
-        $this->add('ANY', $pattern, $handler);
+        return $this->add('PUT', $pattern, $handler);
     }
 
     /** @param callable|array $handler */
-    private function add(string $method, string $pattern, $handler): void
+    public function delete(string $pattern, $handler): Route
     {
-        $this->routes[] = new Route($method, $pattern, $handler);
+        return $this->add('DELETE', $pattern, $handler);
+    }
+
+    /** @param callable|array $handler */
+    public function any(string $pattern, $handler): Route
+    {
+        return $this->add('ANY', $pattern, $handler);
+    }
+
+    /** @param callable|array $handler */
+    private function add(string $method, string $pattern, $handler): Route
+    {
+        $route           = new Route($method, $pattern, $handler);
+        $this->routes[]  = $route;
+        return $route;
     }
 
     // ── Dispatch ──────────────────────────────────────────────────────

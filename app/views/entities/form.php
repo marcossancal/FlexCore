@@ -21,8 +21,9 @@ partial('layout/header', [
   <?php
   $currentTab = $_GET['tab'] ?? 'geral';
   $tabs = [
-    'geral' => ['ico' => '⚙️', 'label' => __('entities.identity')],
-    'api'   => ['ico' => '📡', 'label' => __('fields.api_responses')],
+    'geral'      => ['ico' => '⚙️', 'label' => __('entities.identity')],
+    'permissoes' => ['ico' => '🔐', 'label' => 'Permissões'],
+    'api'        => ['ico' => '📡', 'label' => __('fields.api_responses')],
   ];
   foreach ($tabs as $tKey => $tVal):
   ?>
@@ -172,6 +173,71 @@ function usarEmojiCustom() {
 
 <?php if ($isEdit && ($_GET['tab']??'geral')==='api'): ?>
 <?php partial('entities/api_responses', ['entity'=>$entity]) ?>
+<?php endif; ?>
+
+<?php if ($isEdit && ($_GET['tab']??'geral')==='permissoes'):
+  // Carrega permissões salvas indexadas por papel
+  $permsRows = DB::q('SELECT * FROM entity_permissions WHERE entity_id = ?', [$entity['id']]);
+  $perms = [];
+  foreach ($permsRows as $p) { $perms[$p['role']] = $p; }
+
+  // Defaults quando não há linha salva: admin e editor podem tudo, viewer só lê
+  $defaults = [
+    'admin'  => ['can_create' => 1, 'can_edit' => 1, 'can_delete' => 1],
+    'editor' => ['can_create' => 1, 'can_edit' => 1, 'can_delete' => 0],
+    'viewer' => ['can_create' => 0, 'can_edit' => 0, 'can_delete' => 0],
+  ];
+  $roleLabels = ['admin' => '👑 Admin', 'editor' => '✏️ Editor', 'viewer' => '👁️ Viewer'];
+  $ops = ['can_create' => 'Criar', 'can_edit' => 'Editar', 'can_delete' => 'Excluir'];
+?>
+<form method="POST" action="<?= url('/entities/'.$entity['id'].'/permissions') ?>">
+  <div class="card">
+    <div class="card-title">🔐 Permissões por papel</div>
+    <p style="color:var(--mt);font-size:.83rem;margin-bottom:20px">
+      Define o que cada papel pode fazer nos registros desta entidade.<br>
+      Quando não configurado, o comportamento padrão se aplica (admin e editor têm acesso total, viewer só lê).
+    </p>
+
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:10px 16px;font-size:.75rem;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd)">Papel</th>
+            <?php foreach ($ops as $opKey => $opLabel): ?>
+            <th style="text-align:center;padding:10px 16px;font-size:.75rem;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd)"><?= $opLabel ?></th>
+            <?php endforeach; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($roleLabels as $role => $roleLabel): ?>
+          <?php $row = $perms[$role] ?? $defaults[$role]; ?>
+          <tr style="border-bottom:1px solid var(--bd)">
+            <td style="padding:14px 16px;font-weight:600;font-size:.88rem"><?= $roleLabel ?></td>
+            <?php foreach ($ops as $opKey => $opLabel): ?>
+            <td style="padding:14px 16px;text-align:center">
+              <label style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
+                <input type="checkbox" name="<?= $opKey ?>_<?= $role ?>" value="1"
+                       <?= $row[$opKey] ? 'checked' : '' ?>
+                       style="width:18px;height:18px;accent-color:var(--ac);cursor:pointer">
+              </label>
+            </td>
+            <?php endforeach; ?>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="background:color-mix(in srgb,var(--am) 8%,transparent);border:1px solid color-mix(in srgb,var(--am) 25%,transparent);border-radius:var(--r2);padding:12px 16px;margin-top:18px;font-size:.8rem;color:var(--mt2)">
+      ⚠️ <strong>Admins</strong> sempre têm acesso total à configuração de entidades — esta tabela controla apenas a operação de <em>registros</em>.
+    </div>
+
+    <div class="form-actions">
+      <a href="<?= url('/entities/'.$entity['id'].'/edit?tab=permissoes') ?>" class="btn btn-ghost">Cancelar</a>
+      <button type="submit" class="btn btn-primary">💾 Salvar permissões</button>
+    </div>
+  </div>
+</form>
 <?php endif; ?>
 
 <?php partial('layout/footer') ?>

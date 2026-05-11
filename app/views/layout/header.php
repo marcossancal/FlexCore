@@ -100,9 +100,9 @@ if ($isDark) {
     /* ── MAIN ── */
     .main { margin-left: var(--sb); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
     .topbar {
-      height: 52px; background: var(--bg2); border-bottom: 1px solid var(--bd);
+      background: var(--bg2); border-bottom: 1px solid var(--bd);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 24px; position: sticky; top: 0; z-index: 50; gap: 12px;
+      padding: 15px 24px; position: sticky; top: 0; z-index: 50; gap: 12px;
     }
     .topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
     .breadcrumb { font-size: .82rem; color: var(--mt); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -163,7 +163,7 @@ if ($isDark) {
     /* ── TABLES ── */
     .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; min-width: 480px; }
-    th { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mt); padding: 0 12px 10px; border-bottom: 1px solid var(--bd2); text-align: left; white-space: nowrap; }
+    th { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mt); padding: 10px 12px 10px; border-bottom: 1px solid var(--bd2); text-align: left; white-space: nowrap; }
     td { padding: 12px; border-bottom: 1px solid var(--bd); font-size: .86rem; color: var(--mt2); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(255,255,255,.015); }
@@ -218,7 +218,7 @@ if ($isDark) {
 
       /* Content padding menor */
       .content { padding: 16px; }
-      .topbar { padding: 0 16px; }
+      .topbar { padding: 10px 16px; }
 
       /* Stats em 2 colunas */
       .stats { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }

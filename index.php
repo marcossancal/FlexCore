@@ -61,7 +61,10 @@ if (!$_onInstall) {
 $_publicRoutes = ['/login', '/logout'];
 $_currentPath  = '/' . ltrim($_rel, '/');
 
-if (!$_onInstall && !in_array($_currentPath, $_publicRoutes, true) && !Auth::check()) {
+// Rotas da API REST usam API key — não dependem de sessão
+$_isApiRoute = strpos($_currentPath, '/api/v1/') === 0;
+
+if (!$_onInstall && !$_isApiRoute && !in_array($_currentPath, $_publicRoutes, true) && !Auth::check()) {
     header('Location: ' . BASE_PATH . '/login');
     exit;
 }
@@ -119,4 +122,3 @@ function renderDbError(string $message, string $base): string
     </html>
     HTML;
 }
-

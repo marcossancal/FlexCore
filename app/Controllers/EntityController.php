@@ -16,6 +16,7 @@ use DB;
  *   POST /entities/{id}/update
  *   POST /entities/{id}/delete
  *   POST /entities/{id}/api-responses
+ *   POST /entities/{id}/permissions
  *   GET  /entities/{id}/fields
  *   POST /entities/{id}/fields/create
  *   POST /entities/{id}/fields/{fid}/update
@@ -212,6 +213,41 @@ class EntityController
         DB::run('DELETE FROM entity_fields WHERE id = ? AND entity_id = ?', [$fid, $eid]);
         flash('ok', "Campo '{$f['name']}' excluído.");
         redirect("/entities/{$eid}/fields");
+    }
+
+    // ── Permissions ──────────────────────────────────────────────────
+
+    /**
+     * Salva as permissões granulares por papel para uma entidade.
+     * Recebe POST com campos no padrão: can_create_{role}, can_edit_{role}, can_delete_{role}.
+     * Usa UPSERT para não exigir configuração prévia de cada papel.
+     */
+    public function savePermissions(int $id): void
+    {
+        Auth::require(['admin']);
+        $entity = DB::one('SELECT id, name FROM entities WHERE id = ?', [$id]);
+        if (!$entity) { http_response_code(404); view('errors/404'); return; }
+
+        $roles = ['admin', 'editor', 'viewer'];
+        foreach ($roles as $role) {
+            $canCreate = (int) !empty($_POST["can_create_{$role}"]);
+            $canEdit   = (int) !empty($_POST["can_edit_{$role}"]);
+            $canDelete = (int) !empty($_POST["can_delete_{$role}"]);
+
+            DB::exec(
+                'INSERT INTO entity_permissions (entity_id, role, can_create, can_edit, can_delete)
+                 VALUES (?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                     can_create = VALUES(can_create),
+                     can_edit   = VALUES(can_edit),
+                     can_delete = VALUES(can_delete)',
+                [$id, $role, $canCreate, $canEdit, $canDelete]
+            );
+        }
+
+        audit('update_entity', $id, null, "Permissões da entidade '{$entity['name']}' atualizadas");
+        flash('ok', 'Permissões salvas!');
+        redirect("/entities/{$id}/edit?tab=permissoes");
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

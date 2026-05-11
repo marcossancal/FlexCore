@@ -18,6 +18,8 @@ final class Route
     private $regex;
     /** @var array */
     private $paramNames = [];
+    /** @var MiddlewareInterface[] */
+    private $middlewares = [];
 
     /**
      * @param callable|array $handler
@@ -28,6 +30,15 @@ final class Route
         $this->pattern = $pattern;
         $this->handler = $handler;
         $this->compile();
+    }
+
+    /** Encadeia um ou mais middlewares nesta rota. */
+    public function middleware(MiddlewareInterface ...$mw): self
+    {
+        foreach ($mw as $m) {
+            $this->middlewares[] = $m;
+        }
+        return $this;
     }
 
     public function matches(string $method, string $uri, ?array &$params = null): bool
@@ -57,7 +68,32 @@ final class Route
             $handler = [new $handler[0](), $handler[1]];
         }
 
-        call_user_func_array($handler, array_values($params));
+        if (empty($this->middlewares)) {
+            call_user_func_array($handler, array_values($params));
+            return;
+        }
+
+        // Encadeia middlewares: cada um chama $next para passar adiante.
+        // O Request carrega os parâmetros de rota e fica disponível como
+        // $request->context['api_key'] após o ApiAuthMiddleware.
+        $request = new Request($params);
+
+        $chain = array_reduce(
+            array_reverse($this->middlewares),
+            function (callable $next, MiddlewareInterface $mw) use ($request): callable {
+                return function () use ($mw, $request, $next): void {
+                    $mw->handle($request, $next);
+                };
+            },
+            function () use ($handler, $request, $params): void {
+                // Injeta o Request resolvido pelo middleware no contexto global
+                // para que controllers de API possam ler $request->context.
+                $GLOBALS['_flexcore_request'] = $request;
+                call_user_func_array($handler, array_values($params));
+            }
+        );
+
+        $chain();
     }
 
     private function compile(): void
