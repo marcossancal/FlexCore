@@ -1,0 +1,7 @@
+# Environment & secrets
+.env
+.installed
+.htaccess
+
+# Storage (generated at runtime)
+storage

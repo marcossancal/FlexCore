@@ -1,0 +1,54 @@
+<?php
+class DB {
+    private static ?PDO $pdo = null;
+
+    public static function get(): PDO {
+        if (self::$pdo) return self::$pdo;
+        $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+            $_ENV['DB_HOST'] ?? 'localhost',
+            $_ENV['DB_PORT'] ?? '3306',
+            $_ENV['DB_NAME'] ?? ''
+        );
+        self::$pdo = new PDO($dsn, $_ENV['DB_USER'] ?? '', $_ENV['DB_PASS'] ?? '', [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ]);
+        return self::$pdo;
+    }
+
+    public static function q(string $sql, array $params = []): array {
+        $st = self::get()->prepare($sql);
+        $st->execute($params);
+        return $st->fetchAll();
+    }
+
+    public static function one(string $sql, array $params = []): ?array {
+        $st = self::get()->prepare($sql);
+        $st->execute($params);
+        $r = $st->fetch();
+        return $r ?: null;
+    }
+
+    public static function exec(string $sql, array $params = []): int {
+        $st = self::get()->prepare($sql);
+        $st->execute($params);
+        return (int) self::get()->lastInsertId();
+    }
+
+    public static function run(string $sql, array $params = []): int {
+        $st = self::get()->prepare($sql);
+        $st->execute($params);
+        return $st->rowCount();
+    }
+
+    public static function setting(string $key, mixed $default = ''): string {
+        $r = self::one('SELECT sval FROM settings WHERE skey = ?', [$key]);
+        return $r ? (string)$r['sval'] : (string)$default;
+    }
+
+    public static function setSetting(string $key, string $val, string $label = '', string $grp = 'geral'): void {
+        self::run('INSERT INTO settings (skey,sval,label,grp) VALUES (?,?,?,?)
+                   ON DUPLICATE KEY UPDATE sval=VALUES(sval)', [$key, $val, $label, $grp]);
+    }
+}

@@ -1,2 +1,186 @@
 # FlexCore
-Php Low code backend structure
+
+**FlexCore** é um framework de dados dinâmico, auto-hospedado, construído em PHP. Permite criar entidades personalizadas (tabelas), definir campos de qualquer tipo, gerenciar registros via interface web e expor tudo por uma API REST — sem escrever uma linha de código ou mexer no banco de dados.
+
+Pense nele como um "Airtable self-hosted" com suporte a automações, sistema de plugins, auditoria completa e internacionalização.
+
+---
+
+## Funcionalidades
+
+**Entidades dinâmicas**
+Crie quantas "tabelas" quiser — Clientes, Projetos, Leads, Contratos etc. — diretamente pela interface. Cada entidade tem nome, slug único, ícone e cor de identificação.
+
+**Campos tipados**
+Cada entidade aceita campos de 14 tipos: texto curto, texto longo, número, moeda, e-mail, URL, telefone, data, data/hora, lista (simples e múltipla), checkbox, relação com outra entidade e arquivo.
+
+**CRUD completo de registros**
+Listagem com busca e paginação, formulário de criação/edição, visualização de detalhe e exclusão — tudo gerado automaticamente a partir da definição de campos.
+
+**API REST**
+Toda entidade é automaticamente exposta via API. Autenticação por API Key (Bearer token), rate limiting por janela deslizante de 60 segundos, documentação interativa embutida e respostas padronizadas.
+
+**Automações**
+Configure regras "se acontecer X, faça Y" sem código. Dispare ações ao criar, atualizar ou deletar registros, com condições opcionais por campo. Ação disponível: Webhook (POST/PUT/PATCH) com retry automático (3 tentativas, backoff exponencial).
+
+**Sistema de Plugins**
+Estenda o FlexCore sem modificar o core. Plugins são pastas com `plugin.json` + `Plugin.php`. O sistema de Hooks (Actions e Filters) permite interceptar qualquer evento do ciclo de vida dos registros.
+
+**Usuários e controle de acesso**
+Três papéis: `admin` (acesso total), `editor` (cria e edita registros), `viewer` (somente leitura). Gerenciamento completo de usuários pelo painel.
+
+**Auditoria**
+Todo evento relevante — criação, edição, exclusão de entidades e registros — é registrado no `audit_log` com usuário, IP e descrição.
+
+**Internacionalização**
+Interface disponível em Português (pt_BR), Inglês (en_US), Espanhol (es), Francês (fr) e Alemão (de). Idioma configurável por usuário ou globalmente.
+
+**Instalador web**
+Wizard de instalação guiado — basta apontar o domínio e fornecer as credenciais do banco.
+
+---
+
+## Requisitos
+
+- PHP 7.4 ou superior
+- MySQL 5.7+ ou MariaDB 10.3+
+- Servidor web com suporte a `mod_rewrite` (Apache) ou `try_files` (Nginx)
+- Extensões PHP: `pdo`, `pdo_mysql`, `json`, `mbstring`
+
+---
+
+## Instalação
+
+**1. Faça o upload dos arquivos para o servidor**
+
+```bash
+# Via Git
+git clone https://github.com/marcossancal/FlexCore 
+```
+
+**2. Configure o servidor web**
+
+O arquivo `.htaccess` já está incluído para Apache. Para Nginx, adicione ao bloco `server`:
+
+```nginx
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+```
+
+**3. Acesse o instalador**
+
+Abra `https://seusite.com/install/` no navegador e siga o wizard. O instalador vai:
+- Validar a conexão com o banco
+- Criar todas as tabelas
+- Solicitar os dados do usuário administrador
+- Gerar o arquivo `.env`
+- Criar o arquivo `.installed` para travar o instalador
+
+**4. Faça login**
+
+Acesse `https://seusite.com/login` com as credenciais criadas na instalação.
+
+---
+
+## Configuração (`.env`)
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=flexcore
+DB_USER=root
+DB_PASS=sua_senha
+APP_URL=https://seusite.com.br
+DEBUG=false
+```
+
+Nunca comita o `.env` em repositórios públicos. Use `.env.example` como modelo.
+
+---
+
+## Estrutura de diretórios
+
+```
+flexcore/
+├── index.php               # Entry point
+├── config/
+│   ├── bootstrap.php       # Bootstrap: env, sessão, autoload
+│   ├── container.php       # DI Container (bindings)
+│   └── routes.php          # Mapa central de rotas
+├── core/
+│   ├── Container/          # Injeção de dependência
+│   ├── Hooks/              # Sistema de eventos (Actions + Filters)
+│   └── Router/             # Roteador HTTP
+├── app/
+│   ├── Controllers/        # Controllers MVC
+│   ├── Repositories/       # Acesso a dados
+│   ├── Services/           # Lógica de negócio
+│   └── views/              # Templates PHP
+├── api/
+│   ├── Formatters/         # Formatação de respostas JSON
+│   └── Middleware/         # Auth + Rate Limiting da API
+├── modules/
+│   ├── Automations/        # Engine de automações + actions
+│   └── Plugins/            # Loader e interfaces de plugins
+├── plugins/                # Plugins instalados
+├── lib/
+│   ├── DB.php              # Wrapper PDO
+│   ├── Auth.php            # Autenticação de sessão
+│   └── helpers.php         # Funções globais
+├── translates/             # Arquivos de idioma (JSON)
+├── install/                # Wizard de instalação
+└── docs/                   # Documentação de plugins
+```
+
+---
+
+## Uso rápido
+
+**Criar uma entidade**
+
+1. Vá em **Entidades → Nova entidade**
+2. Defina nome, slug, ícone e cor
+3. Em **Campos**, adicione os campos desejados
+4. Comece a cadastrar registros em **`/e/{slug}`**
+
+**Usar a API**
+
+1. Vá em **API & Chaves → Nova chave**
+2. Copie a chave gerada
+3. Faça requisições com o header `Authorization: Bearer {chave}`
+
+**Criar uma automação**
+
+1. Vá em **Automações → Nova automação**
+2. Selecione a entidade e o evento (criação/atualização/exclusão)
+3. Defina condições opcionais por campo
+4. Configure a URL do webhook de destino
+
+---
+
+## Instalar um plugin
+
+1. Vá em **Plugins → Instalar plugin**
+2. Faça upload do arquivo `.zip` do plugin
+3. Ative o plugin na lista
+4. Configure as opções do plugin (se houver)
+
+O FlexCore já vem com o plugin **FlexCore Data Importer** — importa registros em massa via CSV com mapeamento de colunas para campos.
+
+---
+
+## Segurança
+
+- Senhas armazenadas com `password_hash()` (bcrypt)
+- API Keys armazenadas como hash SHA-256 (nunca em texto plano)
+- Todas as queries usam prepared statements via PDO
+- Saídas HTML escapadas com `htmlspecialchars()`
+- Rate limiting por janela deslizante de 60s por chave
+- Guard de autenticação em todas as rotas (exceto `/login`)
+
+---
+
+## Licença
+
+Distribuído sob licença [MIT](LICENSE).

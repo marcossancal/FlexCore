@@ -1,0 +1,241 @@
+<?php partial('layout/header', [
+  'page_title'  => __('fields.page_title').' — '.$entity['name'],
+  'active_page' => 'entities',
+  'breadcrumbs' => [
+    ['label' => __('fields.breadcrumb_entities'), 'url' => '/entities'],
+    ['label' => $entity['icon'].' '.$entity['name'], 'url' => '/entities/'.$entity['id'].'/edit'],
+    ['label' => __('fields.title')],
+  ],
+]) ?>
+
+<div class="sec-head">
+  <div>
+    <div class="sec-title"><?= h($entity['icon']) ?> <?= h($entity['name']) ?></div>
+    <div class="sec-sub"><?= __('fields.api_responses') ?></div>
+  </div>
+  <div class="sec-actions">
+    <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost btn-sm">👁 <?= __('records.view') ?></a>
+    <a href="<?= url('/entities/' . $entity['id'] . '/edit') ?>" class="btn btn-ghost btn-sm">✏️ <?= __('general.edit') ?></a>
+  </div>
+</div>
+
+<?php $activeTab = $_GET['tab'] ?? 'fields'; ?>
+<div style="display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:24px">
+  <a href="<?= url('/entities/'.$entity['id'].'/fields') ?>?tab=fields"
+     style="padding:10px 20px;font-size:.875rem;font-weight:600;text-decoration:none;border-bottom:2px solid <?= $activeTab==='fields'?'var(--ac)':'transparent' ?>;color:<?= $activeTab==='fields'?'var(--ac)':'var(--mt)' ?>;transition:all .15s">
+    <?= __('fields.tab_fields') ?> <span style="background:var(--sf2);border-radius:10px;padding:1px 7px;font-size:.72rem;margin-left:4px"><?= count($fields) ?></span>
+  </a>
+  <a href="<?= url('/entities/'.$entity['id'].'/fields') ?>?tab=api"
+     style="padding:10px 20px;font-size:.875rem;font-weight:600;text-decoration:none;border-bottom:2px solid <?= $activeTab==='api'?'var(--ac)':'transparent' ?>;color:<?= $activeTab==='api'?'var(--ac)':'var(--mt)' ?>;transition:all .15s">
+    <?= __('fields.tab_api') ?>
+  </a>
+</div>
+
+<?php if ($activeTab === 'api'): ?>
+<?php include BASE . '/app/views/entities/api_responses.php'; ?>
+<?php else: ?>
+
+<div class="row2" style="gap:18px;align-items:start">
+  <div style="flex:2">
+    <div class="card">
+      <div class="card-title"><?= __('fields.title') ?> (<?= count($fields) ?>)</div>
+
+      <?php if (empty($fields)): ?>
+      <div style="text-align:center;padding:32px;color:var(--mt)">
+        <div style="font-size:2rem;margin-bottom:10px">🔧</div>
+        <?= __('fields.no_fields') ?>
+      </div>
+      <?php else: ?>
+      <div id="fields-list">
+        <?php foreach ($fields as $f): ?>
+        <div class="field-row" data-id="<?= $f['id'] ?>" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:8px">
+          <span class="drag-handle" title="<?= __('fields.drag_to_reorder') ?>">⠿</span>
+          <span style="font-size:1.1rem;width:24px;text-align:center"><?= fieldTypeIcon($f['field_type']) ?></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:var(--tx)"><?= h($f['name']) ?>
+              <?php if ($f['required']): ?><span style="color:var(--rd);font-size:.8rem">*</span><?php endif; ?>
+            </div>
+            <div style="font-size:.74rem;color:var(--mt)">
+              <code style="color:var(--ac)"><?= h($f['slug']) ?></code>
+              · <?= h(__('fields.types.'.$f['field_type'])) ?>
+              <?php if ($f['field_type']==='relation' && $f['relation_name']): ?>
+              → <?= h($f['relation_name']) ?>
+              <?php endif; ?>
+              <?php if (in_array($f['field_type'],['select','multiselect']) && $f['options_json']): ?>
+              · <?= count(json_decode($f['options_json'],true)) ?> opções
+              <?php endif; ?>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <?= $f['show_in_list'] ? '<span class="badge bc" style="font-size:.65rem">lista</span>' : '' ?>
+            <button type="button" onclick="editarCampo(<?= h(json_encode($f)) ?>)" class="btn btn-ghost btn-xs">✏️</button>
+            <form method="POST" action="<?= url('entities/'. $entity['id'].'/fields/'. $f['id']. '/delete')?>" style="display:inline"
+                  onsubmit="return confirm('<?= __('fields.delete_confirm') ?>')">
+              <button type="submit" class="btn btn-danger btn-xs">✕</button>
+            </form>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
+    </div>
+
+    <div class="card" style="background:rgba(0,212,255,.03);border-color:rgba(0,212,255,.1)">
+      <div class="card-title" style="font-size:.82rem">💡 <?= __('fields.available_types') ?></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">
+        <?php
+        $types = ['text','textarea','number','email','url','phone','date','datetime','select','multiselect','checkbox','currency','relation'];
+        foreach ($types as $t): ?>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--mt2)">
+          <span><?= fieldTypeIcon($t) ?></span>
+          <span><?= h(__('fields.types.'.$t)) ?></span>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" id="field-form-card" style="position:sticky;top:70px">
+      <div class="card-title" id="field-form-title">➕ <?= __('fields.new') ?></div>
+
+      <form method="POST" id="field-form" action="<?= url('entities/'. $entity['id'].'/fields/create')?>">
+        <input type="hidden" name="field_id" id="fld-id" value="">
+
+        <div class="field">
+          <label><?= __('fields.name') ?> *</label>
+          <input type="text" name="name" id="fld-name" required placeholder="Ex: Nome Completo" oninput="atualizarFldSlug(this.value)">
+        </div>
+
+        <div class="field">
+          <label><?= __('fields.slug') ?></label>
+          <input type="text" name="slug" id="fld-slug" required pattern="[a-z0-9_]+" placeholder="nome_completo" style="font-family:monospace">
+        </div>
+
+        <div class="field">
+          <label><?= __('fields.type') ?> *</label>
+          <select name="field_type" id="fld-type" onchange="onTipoChange(this.value)" required>
+            <option value="">— <?= __('general.none') ?> —</option>
+            <optgroup label="<?= __('fields.types.text') ?>">
+              <option value="text">🔤 <?= __('fields.types.text') ?></option>
+              <option value="textarea">📝 <?= __('fields.types.textarea') ?></option>
+              <option value="email">✉️ <?= __('fields.types.email') ?></option>
+              <option value="url">🔗 <?= __('fields.types.url') ?></option>
+              <option value="phone">📞 <?= __('fields.types.phone') ?></option>
+            </optgroup>
+            <optgroup label="<?= __('fields.types.number') ?>">
+              <option value="number">🔢 <?= __('fields.types.number') ?></option>
+              <option value="currency">💰 <?= __('fields.types.currency') ?></option>
+            </optgroup>
+            <optgroup label="<?= __('fields.types.date') ?>">
+              <option value="date">📅 <?= __('fields.types.date') ?></option>
+              <option value="datetime">🕐 <?= __('fields.types.datetime') ?></option>
+            </optgroup>
+            <optgroup label="<?= __('fields.types.select') ?>">
+              <option value="select">▼ <?= __('fields.types.select') ?></option>
+              <option value="multiselect">☑️ <?= __('fields.types.multiselect') ?></option>
+              <option value="checkbox">✅ <?= __('fields.types.checkbox') ?></option>
+            </optgroup>
+            <optgroup label="<?= __('fields.types.relation') ?>">
+              <option value="relation">🔀 <?= __('fields.types.relation') ?></option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div id="fld-options-wrap" style="display:none">
+          <div class="field">
+            <label><?= __('fields.options') ?></label>
+            <textarea name="options" id="fld-options" style="min-height:100px;font-family:monospace;font-size:.82rem" placeholder="Opção 1&#10;Opção 2&#10;Opção 3"></textarea>
+            <div class="hint"><?= __('fields.options_hint') ?></div>
+          </div>
+        </div>
+
+        <div id="fld-relation-wrap" style="display:none">
+          <div class="field">
+            <label><?= __('fields.relation_to') ?></label>
+            <select name="relation_entity_id" id="fld-relation">
+              <option value="">— <?= __('general.none') ?> —</option>
+              <?php foreach ($all_entities as $ae): ?>
+              <?php if ($ae['id'] !== $entity['id']): ?>
+              <option value="<?= $ae['id'] ?>"><?= h($ae['icon'].' '.$ae['name']) ?></option>
+              <?php endif; ?>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.84rem">
+            <input type="checkbox" name="required" id="fld-required" value="1" style="accent-color:var(--ac);width:auto">
+            <?= __('fields.required') ?>
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.84rem">
+            <input type="checkbox" name="show_in_list" id="fld-show-list" value="1" checked style="accent-color:var(--ac);width:auto">
+            <?= __('fields.show_in_list') ?>
+          </label>
+        </div>
+
+        <div class="field">
+          <label><?= __('fields.position') ?></label>
+          <input type="number" name="position" id="fld-position" value="<?= count($fields) ?>" min="0">
+        </div>
+
+        <div class="form-actions" style="margin-top:12px">
+          <button type="button" onclick="resetFieldForm()" id="btn-fld-cancel" class="btn btn-ghost" style="display:none"><?= __('general.cancel') ?></button>
+          <button type="submit" id="btn-fld-submit" class="btn btn-primary">+ <?= __('fields.add_field') ?></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function slugifyField(s) {
+  return s.toLowerCase()
+    .replace(/[àáâãä]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíî]/g,'i')
+    .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/[ç]/g,'c')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
+function atualizarFldSlug(v) {
+  if (!document.getElementById('fld-id').value) {
+    document.getElementById('fld-slug').value = slugifyField(v);
+  }
+}
+function onTipoChange(t) {
+  document.getElementById('fld-options-wrap').style.display  = ['select','multiselect'].includes(t) ? 'block' : 'none';
+  document.getElementById('fld-relation-wrap').style.display = t === 'relation' ? 'block' : 'none';
+}
+function editarCampo(f) {
+  document.getElementById('field-form-title').textContent = '✏️ <?= __('fields.edit') ?>';
+  document.getElementById('field-form').action = '<?= url('/entities/' . $entity['id'] . '/fields/') ?>' + f.id + '/update';
+  document.getElementById('fld-id').value       = f.id;
+  document.getElementById('fld-name').value     = f.name;
+  document.getElementById('fld-slug').value     = f.slug;
+  document.getElementById('fld-type').value     = f.field_type;
+  document.getElementById('fld-position').value = f.position;
+  document.getElementById('fld-required').checked    = f.required == 1;
+  document.getElementById('fld-show-list').checked   = f.show_in_list == 1;
+  onTipoChange(f.field_type);
+  if (f.options_json) {
+    var opts = JSON.parse(f.options_json);
+    document.getElementById('fld-options').value = opts.join('\n');
+  }
+  if (f.relation_entity_id) document.getElementById('fld-relation').value = f.relation_entity_id;
+  document.getElementById('btn-fld-submit').textContent = '💾 <?= __('general.save') ?>';
+  document.getElementById('btn-fld-cancel').style.display = '';
+  document.getElementById('field-form-card').scrollIntoView({behavior:'smooth'});
+}
+function resetFieldForm() {
+  document.getElementById('field-form-title').textContent = '➕ <?= __('fields.new') ?>';
+  document.getElementById('field-form').action = '<?= url('/entities/' . $entity['id'] . '/fields/create') ?>';
+  document.getElementById('field-form').reset();
+  document.getElementById('fld-id').value = '';
+  document.getElementById('fld-options-wrap').style.display = 'none';
+  document.getElementById('fld-relation-wrap').style.display = 'none';
+  document.getElementById('btn-fld-submit').textContent = '+ <?= __('fields.add_field') ?>';
+  document.getElementById('btn-fld-cancel').style.display = 'none';
+}
+</script>
+
+<?php endif; ?>
+<?php partial('layout/footer') ?>
