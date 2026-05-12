@@ -5,17 +5,9 @@ declare(strict_types=1);
 /**
  * routes.php — Mapa central de rotas do FlexCore.
  *
- * Como adicionar uma rota:
- *   $router->get('/caminho',           [Controller::class, 'metodo']);
- *   $router->post('/caminho',          [Controller::class, 'metodo']);
- *   $router->any('/caminho/{param}',   [Controller::class, 'metodo']);
- *
- * Parâmetros de rota usam a sintaxe {nome}.
- * O valor chega como argumento posicional no método do controller.
- *
- * Exemplo:
- *   $router->get('/e/{slug}', [RecordController::class, 'index']);
- *   // RecordController::index(string $slug): void
+ * Rotas de plugins opcionais NÃO ficam mais aqui com DB::one inline.
+ * Cada plugin registra suas próprias rotas via hook 'router.register'
+ * no método boot() do Plugin.php — veja docs/plugins.md.
  */
 
 use FlexCore\App\Controllers\AuthController;
@@ -26,8 +18,10 @@ use FlexCore\App\Controllers\SettingsController;
 use FlexCore\App\Controllers\ApiKeyController;
 use FlexCore\App\Controllers\AutomationController;
 use FlexCore\App\Controllers\PluginController;
+use FlexCore\Api\Controllers\ApiRecordController;
+use FlexCore\Api\Middleware\ApiAuthMiddleware;
 
-// ── Auth (rotas públicas — antes do guard de login) ───────────────────
+// ── Auth ──────────────────────────────────────────────────────────────
 $router->get( '/login',  [AuthController::class, 'showLogin']);
 $router->post('/login',  [AuthController::class, 'login']);
 $router->get( '/logout', [AuthController::class, 'logout']);
@@ -43,6 +37,7 @@ $router->post('/entities/create',                       [EntityController::class
 $router->get( '/entities/{id}/edit',                    [EntityController::class, 'edit']);
 $router->post('/entities/{id}/update',                  [EntityController::class, 'update']);
 $router->post('/entities/{id}/delete',                  [EntityController::class, 'destroy']);
+$router->post('/entities/bulk-delete',                  [EntityController::class, 'bulkDestroy']);
 $router->post('/entities/{id}/api-responses',           [EntityController::class, 'saveApiResponses']);
 
 // ── Fields ────────────────────────────────────────────────────────────
@@ -52,14 +47,14 @@ $router->post('/entities/{id}/fields/{fid}/update',     [EntityController::class
 $router->post('/entities/{id}/fields/{fid}/delete',     [EntityController::class, 'destroyField']);
 
 // ── Records (entidades dinâmicas) /e/{slug} ───────────────────────────
-$router->get( '/e/{slug}',            [RecordController::class, 'index']);
-$router->get( '/e/{slug}/new',        [RecordController::class, 'create']);
-$router->post('/e/{slug}/create',     [RecordController::class, 'store']);
-$router->post('/e/{slug}/set-view',   [RecordController::class, 'setView']);
-$router->get( '/e/{slug}/{id}',       [RecordController::class, 'show']);
-$router->get( '/e/{slug}/{id}/edit',  [RecordController::class, 'edit']);
-$router->post('/e/{slug}/{id}/update',[RecordController::class, 'update']);
-$router->post('/e/{slug}/{id}/delete',[RecordController::class, 'destroy']);
+$router->get( '/e/{slug}',             [RecordController::class, 'index']);
+$router->get( '/e/{slug}/new',         [RecordController::class, 'create']);
+$router->post('/e/{slug}/create',      [RecordController::class, 'store']);
+$router->post('/e/{slug}/set-view',    [RecordController::class, 'setView']);
+$router->get( '/e/{slug}/{id}',        [RecordController::class, 'show']);
+$router->get( '/e/{slug}/{id}/edit',   [RecordController::class, 'edit']);
+$router->post('/e/{slug}/{id}/update', [RecordController::class, 'update']);
+$router->post('/e/{slug}/{id}/delete', [RecordController::class, 'destroy']);
 
 // ── Settings + Users ──────────────────────────────────────────────────
 $router->get( '/settings',               [SettingsController::class, 'index']);
@@ -68,9 +63,8 @@ $router->post('/users/create',           [SettingsController::class, 'createUser
 $router->post('/users/{id}/update',      [SettingsController::class, 'updateUser']);
 $router->post('/users/{id}/delete',      [SettingsController::class, 'destroyUser']);
 
-// ── API Keys ──────────────────────────────────────────────────────────
+// ── API Keys (interface web) ──────────────────────────────────────────
 $router->get( '/api',                    [ApiKeyController::class, 'index']);
-// $router->get( '/api/docs',               [ApiKeyController::class, 'docs']);
 $router->post('/api/keys/create',        [ApiKeyController::class, 'store']);
 $router->post('/api/keys/{id}/update',   [ApiKeyController::class, 'update']);
 $router->post('/api/keys/{id}/toggle',   [ApiKeyController::class, 'toggle']);
@@ -85,39 +79,43 @@ $router->post('/automations/{id}/delete',    [AutomationController::class, 'dest
 $router->get( '/automations/{id}/logs',      [AutomationController::class, 'logs']);
 
 // ── Plugins ───────────────────────────────────────────────────────────
-$router->get( '/plugins',                        [PluginController::class, 'index']);
-$router->get( '/plugins/docs',                   [PluginController::class, 'docs']);
-$router->post('/plugins/install',                [PluginController::class, 'install']);
-$router->post('/plugins/{slug}/toggle',          [PluginController::class, 'toggle']);
-$router->post('/plugins/{slug}/settings',        [PluginController::class, 'saveSettings']);
-$router->post('/plugins/{slug}/uninstall',       [PluginController::class, 'uninstall']);
+$router->get( '/plugins',                    [PluginController::class, 'index']);
+$router->get( '/plugins/docs',               [PluginController::class, 'docs']);
+$router->post('/plugins/install',            [PluginController::class, 'install']);
+$router->post('/plugins/{slug}/toggle',      [PluginController::class, 'toggle']);
+$router->post('/plugins/{slug}/settings',    [PluginController::class, 'saveSettings']);
+$router->post('/plugins/{slug}/uninstall',   [PluginController::class, 'uninstall']);
 
-// ── FlexCore Data Importer ────────────────────────────────────────────
-// Só registra as rotas se o plugin estiver instalado e ativo
-if (
-    file_exists(BASE . '/plugins/flexcore-data-importer/ImporterController.php') &&
-    \DB::one("SELECT id FROM plugins WHERE plugin_id = 'flexcore-data-importer' AND active = 1")
-) {
-    require_once BASE . '/plugins/flexcore-data-importer/ImporterController.php';
-    $importer = new \FlexCoreDataImporter\ImporterController();
+// ── API REST v1 ───────────────────────────────────────────────────────
+$router->get(   '/api/v1/entities',          [ApiRecordController::class, 'entities'])
+       ->middleware(new ApiAuthMiddleware());
 
-    $router->get( '/importer',                [$importer, 'index']);
-    $router->post('/importer/upload',         [$importer, 'upload']);
-    $router->get( '/importer/map/{token}',    [$importer, 'map']);
-    $router->post('/importer/map/{token}',    [$importer, 'saveMap']);
-    $router->get( '/importer/run/{token}',    [$importer, 'run']);
-    $router->post('/importer/run/{token}',    [$importer, 'run']);
-    $router->get( '/importer/result/{token}', [$importer, 'result']);
-}
+$router->get(   '/api/v1/e/{slug}',          [ApiRecordController::class, 'index'])
+       ->middleware(new ApiAuthMiddleware());
 
-// ── FlexCore Data Exporter ─────────────────────────────────────────────
-if (
-    file_exists(BASE . '/plugins/flexcore-data-exporter/ExporterController.php') &&
-    \DB::one("SELECT id FROM plugins WHERE plugin_id = 'flexcore-data-exporter' AND active = 1")
-) {
-    require_once BASE . '/plugins/flexcore-data-exporter/ExporterController.php';
-    $exporter = new \FlexCoreDataExporter\ExporterController();
+$router->get(   '/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'show'])
+       ->middleware(new ApiAuthMiddleware());
 
-    $router->get( '/exporter/{slug}',      [$exporter, 'index']);
-    $router->post('/exporter/{slug}/run',  [$exporter, 'run']);
-}
+$router->post(  '/api/v1/e/{slug}',          [ApiRecordController::class, 'store'])
+       ->middleware(new ApiAuthMiddleware());
+
+$router->put(   '/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'update'])
+       ->middleware(new ApiAuthMiddleware());
+
+$router->delete('/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'destroy'])
+       ->middleware(new ApiAuthMiddleware());
+
+// ── Rotas de plugins ativos ───────────────────────────────────────────
+// Plugins registram suas rotas via hook 'router.register' no boot().
+// Exemplo no Plugin.php do plugin:
+//
+//   public function boot(): void
+//   {
+//       \FlexCore\Core\Hooks\Hooks::on('router.register', function ($router) {
+//           $router->get('/importer', [ImporterController::class, 'index']);
+//           // ...
+//       });
+//   }
+//
+// O hook é disparado abaixo — sem DB::one inline neste arquivo.
+\FlexCore\Core\Hooks\Hooks::fire('router.register', [$router]);

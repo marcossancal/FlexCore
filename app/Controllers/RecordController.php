@@ -9,6 +9,13 @@ use DB;
 /**
  * RecordController — SRP: CRUD de registros de qualquer entidade.
  *
+ * Responsabilidades deste controller:
+ *   - Ler input HTTP (GET/POST)
+ *   - Chamar Service ou Repository
+ *   - Redirecionar ou renderizar view
+ *
+ * SQL de listagem, paginação e busca delegado ao RecordRepository.
+ *
  * Rotas cobertas:
  *   GET  /e/{slug}
  *   GET  /e/{slug}/new
@@ -17,7 +24,7 @@ use DB;
  *   GET  /e/{slug}/{id}/edit
  *   POST /e/{slug}/{id}/update
  *   POST /e/{slug}/{id}/delete
- *   POST /e/{slug}/set-view   (salva preferência de view via form POST)
+ *   POST /e/{slug}/set-view
  */
 class RecordController
 {
@@ -32,15 +39,12 @@ class RecordController
         $per         = 25;
 
         // ── Preferência de view (tabela / cards / kanban) ─────────────
-        // Prioridade: ?view= na URL > salvo em settings > 'table' (padrão)
         $viewKey     = 'view_pref_' . Auth::id() . '_' . $entity['id'];
-        $savedView   = DB::one(
-            "SELECT sval FROM settings WHERE skey = ?", [$viewKey]
-        )['sval'] ?? 'table';
-        $currentView = in_array(get('view'), ['table','cards','kanban'], true)
+        $savedView   = DB::setting($viewKey, 'table');
+        $currentView = in_array(get('view'), ['table', 'cards', 'kanban'], true)
             ? get('view')
             : $savedView;
-        if (!in_array($currentView, ['table','cards','kanban'], true)) {
+        if (!in_array($currentView, ['table', 'cards', 'kanban'], true)) {
             $currentView = 'table';
         }
 
@@ -49,51 +53,29 @@ class RecordController
         $rawFilters    = (array) ($_GET['filters'] ?? []);
         $activeFilters = $this->parseFilters($rawFilters, $fields);
 
-        [$whereExtra, $bindParams] = $this->buildAdvancedWhere($q, $activeFilters, $fields, $entity['id']);
+        [$whereExtra, $bindParams] = $this->buildAdvancedWhere($q, $activeFilters, $fields);
 
         // ── Ordenação ────────────────────────────────────────────────
-        // ?sort_field=created_at|{field_id}  ?sort_dir=asc|desc
         $sortField = get('sort_field', 'created_at');
         $sortDir   = strtolower(get('sort_dir', 'desc')) === 'asc' ? 'ASC' : 'DESC';
         $fieldMap  = array_column($fields, null, 'id');
+        $orderSql  = $this->buildOrderSql($sortField, $sortDir, $fieldMap);
 
-        if ($sortField === 'created_at') {
-            $orderSql = "ORDER BY r.created_at {$sortDir}";
-        } elseif (isset($fieldMap[(int)$sortField])) {
-            $sf  = $fieldMap[(int)$sortField];
-            $col = in_array($sf['field_type'], ['number','currency'], true) ? 'val_num'
-                 : (in_array($sf['field_type'], ['date','datetime'], true)  ? 'val_date' : 'val_text');
-            $fId = (int) $sf['id'];
-            $orderSql = "ORDER BY (
-                SELECT rv_s.{$col} FROM record_values rv_s
-                 WHERE rv_s.record_id = r.id AND rv_s.field_id = {$fId}
-                 LIMIT 1
-            ) {$sortDir}";
-        } else {
-            $orderSql = "ORDER BY r.created_at DESC";
-        }
-
-        $total = (int) DB::one(
-            "SELECT COUNT(*) AS c FROM entity_records r WHERE r.entity_id = ? {$whereExtra}",
-            array_merge([$entity['id']], $bindParams)
-        )['c'];
+        // ── Consultas delegadas ao Repository ────────────────────────
+        $repo  = $this->repo();
+        $total = $repo->countFiltered($entity['id'], $whereExtra, $bindParams);
 
         $offset  = ($page - 1) * $per;
-        $records = DB::q(
-            "SELECT * FROM entity_records r
-              WHERE r.entity_id = ? {$whereExtra}
-              {$orderSql}
-              LIMIT {$per} OFFSET {$offset}",
-            array_merge([$entity['id']], $bindParams)
+        $records = $repo->listPaginated(
+            $entity['id'], $whereExtra, $bindParams, $orderSql, $per, $offset
         );
 
         foreach ($records as &$r) {
-            $r['values'] = $this->loadValues($r['id']);
+            $r['values'] = $repo->loadValues($r['id']);
         }
         unset($r);
 
-        // Kanban: campo select que será usado para agrupar colunas
-        // Usa o primeiro campo do tipo 'select' marcado como show_in_list, ou null
+        // Kanban: primeiro campo select visível na listagem
         $kanbanField = null;
         foreach ($list_fields as $f) {
             if ($f['field_type'] === 'select') { $kanbanField = $f; break; }
@@ -114,17 +96,11 @@ class RecordController
     {
         [$entity] = $this->resolveEntity($slug);
         $view = $_POST['view'] ?? 'table';
-        if (!in_array($view, ['table','cards','kanban'], true)) $view = 'table';
+        if (!in_array($view, ['table', 'cards', 'kanban'], true)) $view = 'table';
 
         $viewKey = 'view_pref_' . Auth::id() . '_' . $entity['id'];
-        DB::exec(
-            "INSERT INTO settings (skey, sval, label, grp) VALUES (?, ?, '', 'view_prefs')
-             ON DUPLICATE KEY UPDATE sval = VALUES(sval)",
-            [$viewKey, $view]
-        );
+        DB::setSetting($viewKey, $view, '', 'view_prefs');
 
-        // Reconstrói a query string de retorno preservando filtros e ordenação,
-        // mas sem o parâmetro view (ele está salvo em settings agora).
         $allowed = ['q', 'filters', 'sort_field', 'sort_dir', 'page'];
         $qs = [];
         foreach ($allowed as $k) {
@@ -175,7 +151,7 @@ class RecordController
     {
         [$entity, $fields] = $this->resolveEntity($slug);
         $record = $this->resolveRecord($id, $entity['id']);
-        $record['values'] = $this->loadValues($id);
+        $record['values'] = $this->repo()->loadValues($id);
         view('records/show', compact('entity', 'fields', 'record'));
     }
 
@@ -186,7 +162,7 @@ class RecordController
         [$entity, $fields] = $this->resolveEntity($slug);
         $this->checkEntityPermission($entity, 'can_edit');
         $record = $this->resolveRecord($id, $entity['id']);
-        $record['values'] = $this->loadValues($id);
+        $record['values'] = $this->repo()->loadValues($id);
         $fields = $this->withRelationRecords($fields);
         view('records/form', compact('entity', 'fields', 'record'));
     }
@@ -233,39 +209,41 @@ class RecordController
         if ($perm === null) return;
 
         if (empty($perm[$op])) {
-            http_response_code(403); view('errors/403'); exit;
+            http_response_code(403);
+            view('errors/403');
+            exit;
         }
     }
 
     // ── Advanced filter helpers ───────────────────────────────────────
 
     private const OPERATORS = [
-        'eq'          => ['label' => 'igual a',          'col' => 'auto'],
-        'neq'         => ['label' => 'diferente de',     'col' => 'auto'],
-        'contains'    => ['label' => 'contém',           'col' => 'val_text'],
-        'not_contains'=> ['label' => 'não contém',       'col' => 'val_text'],
-        'starts_with' => ['label' => 'começa com',       'col' => 'val_text'],
-        'gt'          => ['label' => 'maior que',        'col' => 'auto'],
-        'lt'          => ['label' => 'menor que',        'col' => 'auto'],
-        'gte'         => ['label' => 'maior ou igual a', 'col' => 'auto'],
-        'lte'         => ['label' => 'menor ou igual a', 'col' => 'auto'],
-        'empty'       => ['label' => 'está vazio',       'col' => 'auto'],
-        'not_empty'   => ['label' => 'não está vazio',   'col' => 'auto'],
+        'eq'           => ['label' => 'igual a',          'col' => 'auto'],
+        'neq'          => ['label' => 'diferente de',     'col' => 'auto'],
+        'contains'     => ['label' => 'contém',           'col' => 'val_text'],
+        'not_contains' => ['label' => 'não contém',       'col' => 'val_text'],
+        'starts_with'  => ['label' => 'começa com',       'col' => 'val_text'],
+        'gt'           => ['label' => 'maior que',        'col' => 'auto'],
+        'lt'           => ['label' => 'menor que',        'col' => 'auto'],
+        'gte'          => ['label' => 'maior ou igual a', 'col' => 'auto'],
+        'lte'          => ['label' => 'menor ou igual a', 'col' => 'auto'],
+        'empty'        => ['label' => 'está vazio',       'col' => 'auto'],
+        'not_empty'    => ['label' => 'não está vazio',   'col' => 'auto'],
     ];
 
     public static function operatorsFor(string $fieldType): array
     {
-        $text    = ['eq','neq','contains','not_contains','starts_with','empty','not_empty'];
-        $numeric = ['eq','neq','gt','lt','gte','lte','empty','not_empty'];
+        $text    = ['eq', 'neq', 'contains', 'not_contains', 'starts_with', 'empty', 'not_empty'];
+        $numeric = ['eq', 'neq', 'gt', 'lt', 'gte', 'lte', 'empty', 'not_empty'];
         $map = [
             'text'        => $text, 'textarea' => $text, 'email' => $text,
             'url'         => $text, 'phone'    => $text,
-            'select'      => ['eq','neq','empty','not_empty'],
-            'multiselect' => ['contains','not_contains','empty','not_empty'],
+            'select'      => ['eq', 'neq', 'empty', 'not_empty'],
+            'multiselect' => ['contains', 'not_contains', 'empty', 'not_empty'],
             'number'      => $numeric, 'currency' => $numeric,
-            'checkbox'    => ['eq','empty','not_empty'],
+            'checkbox'    => ['eq', 'empty', 'not_empty'],
             'date'        => $numeric, 'datetime' => $numeric,
-            'relation'    => ['eq','neq','empty','not_empty'],
+            'relation'    => ['eq', 'neq', 'empty', 'not_empty'],
         ];
         return array_intersect_key(self::OPERATORS, array_flip($map[$fieldType] ?? array_keys(self::OPERATORS)));
     }
@@ -286,35 +264,42 @@ class RecordController
         return $parsed;
     }
 
-    private function buildAdvancedWhere(string $q, array $activeFilters, array $fields, int $entityId): array
+    /**
+     * Monta cláusulas WHERE extras e parâmetros PDO para busca e filtros.
+     * Usa o Repository para a query de IDs na busca full-text.
+     */
+    private function buildAdvancedWhere(string $q, array $activeFilters, array $fields): array
     {
-        $where = ''; $params = [];
+        $where = '';
+        $params = [];
 
         if ($q !== '') {
-            $fieldIds = implode(',', array_column($fields, 'id') ?: [0]);
-            $ids      = DB::q(
-                "SELECT DISTINCT record_id FROM record_values WHERE field_id IN ({$fieldIds}) AND val_text LIKE ?",
-                ["%{$q}%"]
-            );
-            $idList  = implode(',', array_column($ids, 'record_id') ?: [0]);
-            $where  .= " AND r.id IN ({$idList})";
+            $fieldIds = array_column($fields, 'id');
+            $matchIds = $this->repo()->searchValueIds($fieldIds, $q);
+            $idList   = implode(',', array_map('intval', $matchIds) ?: [0]);
+            $where   .= " AND r.id IN ({$idList})";
         }
 
         foreach ($activeFilters as $f) {
-            $field = $f['field']; $op = $f['op']; $val = $f['value'];
+            $field = $f['field'];
+            $op    = $f['op'];
+            $val   = $f['value'];
             $fId   = (int) $field['id'];
-            $col   = in_array($field['field_type'], ['number','currency'], true) ? 'val_num'
-                   : (in_array($field['field_type'], ['date','datetime'], true)  ? 'val_date' : 'val_text');
+            $col   = in_array($field['field_type'], ['number', 'currency'], true) ? 'val_num'
+                   : (in_array($field['field_type'], ['date', 'datetime'], true) ? 'val_date' : 'val_text');
 
             if ($op === 'empty') {
-                $where .= " AND NOT EXISTS (SELECT 1 FROM record_values rv_e WHERE rv_e.record_id=r.id AND rv_e.field_id=? AND rv_e.{$col} IS NOT NULL AND rv_e.{$col}!='')";
-                $params[] = $fId; continue;
+                $where   .= " AND NOT EXISTS (SELECT 1 FROM record_values rv_e WHERE rv_e.record_id=r.id AND rv_e.field_id=? AND rv_e.{$col} IS NOT NULL AND rv_e.{$col}!='')";
+                $params[] = $fId;
+                continue;
             }
             if ($op === 'not_empty') {
-                $where .= " AND EXISTS (SELECT 1 FROM record_values rv_ne WHERE rv_ne.record_id=r.id AND rv_ne.field_id=? AND rv_ne.{$col} IS NOT NULL AND rv_ne.{$col}!='')";
-                $params[] = $fId; continue;
+                $where   .= " AND EXISTS (SELECT 1 FROM record_values rv_ne WHERE rv_ne.record_id=r.id AND rv_ne.field_id=? AND rv_ne.{$col} IS NOT NULL AND rv_ne.{$col}!='')";
+                $params[] = $fId;
+                continue;
             }
-            $sqlOp = match($op) {
+
+            $sqlOp = match ($op) {
                 'eq'           => '= ?',
                 'neq'          => '!= ?',
                 'gt'           => '> ?',
@@ -326,11 +311,37 @@ class RecordController
                 'starts_with'  => "LIKE CONCAT(?,'%')",
                 default        => '= ?',
             };
-            $where .= " AND EXISTS (SELECT 1 FROM record_values rv_f WHERE rv_f.record_id=r.id AND rv_f.field_id=? AND rv_f.{$col} {$sqlOp})";
-            $params[] = $fId; $params[] = $val;
+
+            $where   .= " AND EXISTS (SELECT 1 FROM record_values rv_f WHERE rv_f.record_id=r.id AND rv_f.field_id=? AND rv_f.{$col} {$sqlOp})";
+            $params[] = $fId;
+            $params[] = $val;
         }
 
         return [$where, $params];
+    }
+
+    /**
+     * Monta a cláusula ORDER BY (sanitizada) a partir dos parâmetros de URL.
+     */
+    private function buildOrderSql(string $sortField, string $sortDir, array $fieldMap): string
+    {
+        if ($sortField === 'created_at') {
+            return "ORDER BY r.created_at {$sortDir}";
+        }
+
+        if (isset($fieldMap[(int) $sortField])) {
+            $sf  = $fieldMap[(int) $sortField];
+            $col = in_array($sf['field_type'], ['number', 'currency'], true) ? 'val_num'
+                 : (in_array($sf['field_type'], ['date', 'datetime'], true) ? 'val_date' : 'val_text');
+            $fId = (int) $sf['id'];
+            return "ORDER BY (
+                SELECT rv_s.{$col} FROM record_values rv_s
+                 WHERE rv_s.record_id = r.id AND rv_s.field_id = {$fId}
+                 LIMIT 1
+            ) {$sortDir}";
+        }
+
+        return 'ORDER BY r.created_at DESC';
     }
 
     // ── Core helpers ─────────────────────────────────────────────────
@@ -353,24 +364,11 @@ class RecordController
     private function resolveRecord(int $id, int $entityId): array
     {
         $record = DB::one(
-            'SELECT * FROM entity_records WHERE id = ? AND entity_id = ?', [$id, $entityId]
+            'SELECT * FROM entity_records WHERE id = ? AND entity_id = ?',
+            [$id, $entityId]
         );
         if (!$record) { http_response_code(404); view('errors/404'); exit; }
         return $record;
-    }
-
-    private function loadValues(int $recordId): array
-    {
-        $rows = DB::q(
-            'SELECT field_id, val_text, val_num, val_date FROM record_values WHERE record_id = ?',
-            [$recordId]
-        );
-        $out = [];
-        foreach ($rows as $v) {
-            $out[$v['field_id']] = $v['val_text']
-                ?? ($v['val_num'] !== null ? (string) $v['val_num'] : ($v['val_date'] ?? null));
-        }
-        return $out;
     }
 
     private function buildInput(array $fields): array
@@ -395,6 +393,12 @@ class RecordController
             ->make(\FlexCore\App\Services\RecordService::class);
     }
 
+    private function repo(): \FlexCore\App\Repositories\RecordRepository
+    {
+        return \FlexCore\Core\Container\Container::getInstance()
+            ->make(\FlexCore\App\Repositories\RecordRepository::class);
+    }
+
     private function withRelationRecords(array $fields): array
     {
         foreach ($fields as &$f) {
@@ -405,7 +409,7 @@ class RecordController
             );
             $f['relation_records'] = DB::q(
                 "SELECT r.id, rv.val_text AS label FROM entity_records r
-                   LEFT JOIN record_values rv ON rv.record_id = r.id AND rv.field_id = " . ($rf['id'] ?? 0) . "
+                   LEFT JOIN record_values rv ON rv.record_id = r.id AND rv.field_id = " . ((int) ($rf['id'] ?? 0)) . "
                   WHERE r.entity_id = ? ORDER BY r.created_at DESC LIMIT 200",
                 [$f['relation_entity_id']]
             );

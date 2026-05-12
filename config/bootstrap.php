@@ -31,72 +31,53 @@ if (($_ENV['DEBUG'] ?? 'false') === 'true') {
 
 session_start();
 
-// ── Libs (sem namespace — carregadas primeiro) ────────────────────────
-require_once BASE_BS . '/lib/DB.php';
-require_once BASE_BS . '/lib/Auth.php';
+// ── Autoloader PSR-4 ─────────────────────────────────────────────────
+// Resolve namespaces FlexCore\* para o diretório raiz do projeto.
+// Elimina a necessidade de require_once manual para cada arquivo.
+// Prefixos registrados:
+//   FlexCore\Lib\        → lib/
+//   FlexCore\Core\       → core/
+//   FlexCore\App\        → app/
+//   FlexCore\Api\        → api/
+//   FlexCore\Modules\    → modules/
+spl_autoload_register(function (string $class): void {
+    $map = [
+        'FlexCore\\Lib\\'     => BASE_BS . '/lib/',
+        'FlexCore\\Core\\'    => BASE_BS . '/core/',
+        'FlexCore\\App\\'     => BASE_BS . '/app/',
+        'FlexCore\\Api\\'     => BASE_BS . '/api/',
+        'FlexCore\\Modules\\' => BASE_BS . '/modules/',
+    ];
+
+    foreach ($map as $prefix => $base) {
+        if (strpos($class, $prefix) !== 0) continue;
+        $relative = substr($class, strlen($prefix));
+        $file     = $base . str_replace('\\', '/', $relative) . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+    }
+});
+
+// ── Aliases globais ───────────────────────────────────────────────────
+// DB e Auth são classes namespaced (FlexCore\Lib\DB / Auth).
+// Os aliases abaixo mantêm compatibilidade com código legado, plugins
+// e views que referenciam \DB e \Auth sem namespace.
+// Não é necessário registrá-los no autoloader — class_alias é instantâneo.
+class_alias(\FlexCore\Lib\DB::class,   'DB');
+class_alias(\FlexCore\Lib\Auth::class, 'Auth');
+
+// ── Helpers (funções globais) ─────────────────────────────────────────
 require_once BASE_BS . '/lib/helpers.php';
 
-// ── Core: Router ─────────────────────────────────────────────────────
-require_once BASE_BS . '/core/Router/MiddlewareInterface.php';
-require_once BASE_BS . '/core/Router/Request.php';
-require_once BASE_BS . '/core/Router/Route.php';
-require_once BASE_BS . '/core/Router/Router.php';
-
-// ── Core: Hooks ──────────────────────────────────────────────────────
-require_once BASE_BS . '/core/Hooks/HookDispatcher.php';
-
-// ── Core: Container (DI) ─────────────────────────────────────────────
-require_once BASE_BS . '/core/Container/Container.php';
-
-// ── App: Repositories ────────────────────────────────────────────────
-require_once BASE_BS . '/app/Repositories/RepositoryInterface.php';
-require_once BASE_BS . '/app/Repositories/EntityRepositoryInterface.php';
-require_once BASE_BS . '/app/Repositories/BaseRepository.php';
-require_once BASE_BS . '/app/Repositories/EntityRepository.php';
-require_once BASE_BS . '/app/Repositories/RecordRepository.php';
-require_once BASE_BS . '/app/Repositories/FieldRepository.php';
-require_once BASE_BS . '/app/Repositories/AutomationRepository.php';
-
-// ── App: Services ────────────────────────────────────────────────────
-require_once BASE_BS . '/app/Services/AuditService.php';
-require_once BASE_BS . '/app/Services/RecordService.php';
-
-// ── App: Controllers ─────────────────────────────────────────────────
-require_once BASE_BS . '/app/Controllers/AuthController.php';
-require_once BASE_BS . '/app/Controllers/DashboardController.php';
-require_once BASE_BS . '/app/Controllers/EntityController.php';
-require_once BASE_BS . '/app/Controllers/RecordController.php';
-require_once BASE_BS . '/app/Controllers/SettingsController.php';
-require_once BASE_BS . '/app/Controllers/ApiKeyController.php';
-require_once BASE_BS . '/app/Controllers/AutomationController.php';
-require_once BASE_BS . '/app/Controllers/PluginController.php';
-
-// ── Modules: Plugins ─────────────────────────────────────────────────
-require_once BASE_BS . '/modules/Plugins/PluginInterface.php';
-require_once BASE_BS . '/modules/Plugins/PluginManifest.php';
-require_once BASE_BS . '/modules/Plugins/PluginLoader.php';
-
-// ── Modules: Automations ─────────────────────────────────────────────
-require_once BASE_BS . '/modules/Automations/ActionHandlerInterface.php';
-require_once BASE_BS . '/modules/Automations/Actions/WebhookAction.php';
-require_once BASE_BS . '/modules/Automations/AutomationEngine.php';
-
-// ── API ──────────────────────────────────────────────────────────────
-require_once BASE_BS . '/api/Formatters/ApiResponse.php';
-require_once BASE_BS . '/api/Middleware/ApiAuthMiddleware.php';
-require_once BASE_BS . '/api/Controllers/ApiRecordController.php';
-
-// ── BASE_PATH (usado por url(), redirect(), Router) ──────────────────
+// ── BASE_PATH (usado por url(), redirect(), Router) ───────────────────
 define('BASE_PATH', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'));
 
-// ── Container de DI ──────────────────────────────────────────────────
-// Registra todos os bindings. O $container fica disponível globalmente
-// via Container::getInstance() em qualquer parte do código.
+// ── Container de DI ───────────────────────────────────────────────────
 $container = require_once BASE_BS . '/config/container.php';
 
 // ── Boot: PluginLoader ───────────────────────────────────────────────
-// Só inicializa plugins se o banco já estiver disponível (.installed existe).
-// Isso evita erros durante a instalação, quando as tabelas ainda não existem.
 if (file_exists(BASE_BS . '/.installed')) {
     try {
         $activePluginIds = array_column(
@@ -104,7 +85,6 @@ if (file_exists(BASE_BS . '/.installed')) {
             'plugin_id'
         );
 
-        // APP_VERSION é definido no index.php — usar fallback seguro
         $appVersion   = defined('APP_VERSION') ? APP_VERSION : '1.0.0';
         $pluginLoader = new \FlexCore\Modules\Plugins\PluginLoader(
             BASE . '/plugins',
@@ -117,8 +97,6 @@ if (file_exists(BASE_BS . '/.installed')) {
     }
 
     // ── Boot: AutomationEngine ───────────────────────────────────────
-    // Registra os listeners de hooks. As automações disparam automaticamente
-    // em record.created / record.updated / record.deleted.
     try {
         /** @var \FlexCore\Modules\Automations\AutomationEngine $automationEngine */
         $automationEngine = $container->make(\FlexCore\Modules\Automations\AutomationEngine::class);

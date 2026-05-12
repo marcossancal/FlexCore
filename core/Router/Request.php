@@ -70,12 +70,48 @@ final class Request
         return $this->server['REMOTE_ADDR'] ?? '0.0.0.0';
     }
 
+    /**
+     * Extrai o Bearer token do header Authorization.
+     *
+     * O Apache/XAMPP em alguns modos (CGI, FastCGI) não popula
+     * HTTP_AUTHORIZATION automaticamente. Tentativas em ordem:
+     *   1. $_SERVER['HTTP_AUTHORIZATION']        — mod_php padrão
+     *   2. $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] — após RewriteRule
+     *   3. getallheaders()['Authorization']      — fallback Apache
+     *   4. apache_request_headers()              — alias do getallheaders()
+     */
     public function bearerToken(): ?string
     {
-        $header = $this->server['HTTP_AUTHORIZATION'] ?? '';
-        if (strpos($header, 'Bearer ') === 0) {
+        $header = $this->resolveAuthorizationHeader();
+        if ($header !== null && strpos($header, 'Bearer ') === 0) {
             return substr($header, 7);
         }
+        return null;
+    }
+
+    private function resolveAuthorizationHeader(): ?string
+    {
+        // 1. Caminho normal (mod_php ou .htaccess com E=HTTP_AUTHORIZATION)
+        if (!empty($this->server['HTTP_AUTHORIZATION'])) {
+            return $this->server['HTTP_AUTHORIZATION'];
+        }
+
+        // 2. Apache rewrite seta como REDIRECT_HTTP_AUTHORIZATION
+        if (!empty($this->server['REDIRECT_HTTP_AUTHORIZATION'])) {
+            return $this->server['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+
+        // 3. getallheaders() — disponível em mod_php e algumas configs CGI
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            // Busca case-insensitive
+            foreach ($headers as $name => $value) {
+                if (strcasecmp($name, 'Authorization') === 0) {
+                    return $value;
+                }
+            }
+        }
+
         return null;
     }
 }

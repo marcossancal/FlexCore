@@ -105,13 +105,85 @@ class RecordService
             $key = 'field_' . $f['id'];
             $raw = $input[$key] ?? null;
 
-            if ($f['field_type'] === 'multiselect') {
-                $raw = isset($input[$key]) ? json_encode((array) $input[$key]) : null;
-            } elseif ($f['field_type'] === 'checkbox') {
-                $raw = isset($input[$key]) ? '1' : '0';
+            switch ($f['field_type']) {
+
+                // ── Booleano ────────────────────────────────────────
+                case 'checkbox':
+                    $raw = isset($input[$key]) ? '1' : '0';
+                    break;
+
+                // ── Arrays JSON ──────────────────────────────────────
+                case 'multiselect':
+                case 'tags':
+                    $raw = isset($input[$key]) ? json_encode((array) $input[$key]) : null;
+                    break;
+
+                // ── UUID — gerado automaticamente se vazio ───────────
+                case 'uuid':
+                    if (empty($raw)) {
+                        $raw = $this->generateUuid();
+                    }
+                    break;
+
+                // ── Imagem — aceita base64 ou URL data: ─────────────
+                case 'image':
+                    // Se veio arquivo via $_FILES, converte para base64
+                    if (isset($input[$key . '_file_data']) && $input[$key . '_file_data']) {
+                        $raw = $input[$key . '_file_data'];
+                    }
+                    // Mantém base64 existente se não enviou novo
+                    if (empty($raw)) {
+                        $raw = $input[$key . '_keep'] ?? null;
+                    }
+                    break;
+
+                // ── Arquivo — base64 com metadados ───────────────────
+                case 'file':
+                    if (isset($input[$key . '_file_data']) && $input[$key . '_file_data']) {
+                        $raw = $input[$key . '_file_data'];
+                    }
+                    if (empty($raw)) {
+                        $raw = $input[$key . '_keep'] ?? null;
+                    }
+                    break;
+
+                // ── Daterange — JSON {start, end} ────────────────────
+                case 'daterange':
+                    $start = trim($input[$key . '_start'] ?? '');
+                    $end   = trim($input[$key . '_end']   ?? '');
+                    $raw   = ($start || $end) ? json_encode(['start' => $start, 'end' => $end]) : null;
+                    break;
+
+                // ── Duration — converte H:M:S → segundos ────────────
+                case 'duration':
+                    if (is_string($raw) && str_contains($raw, ':')) {
+                        $parts = array_map('intval', explode(':', $raw));
+                        $raw   = match(count($parts)) {
+                            3 => ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2],
+                            2 => ($parts[0] * 60) + $parts[1],
+                            default => (int)$raw,
+                        };
+                    }
+                    break;
+
+                // ── JSON — valida antes de salvar ────────────────────
+                case 'json':
+                    if (!empty($raw) && json_decode($raw) === null) {
+                        $raw = null; // JSON inválido descartado
+                    }
+                    break;
             }
 
             $this->records->saveValue($recordId, $f, $raw);
         }
+    }
+
+    private function generateUuid(): string
+    {
+        // RFC 4122 v4 UUID
+        $data    = random_bytes(16);
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }

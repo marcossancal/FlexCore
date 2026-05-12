@@ -12,7 +12,15 @@ Pense nele como um "Airtable self-hosted" com suporte a automações, sistema de
 Crie quantas "tabelas" quiser — Clientes, Projetos, Leads, Contratos etc. — diretamente pela interface. Cada entidade tem nome, slug único, ícone e cor de identificação.
 
 **Campos tipados**
-Cada entidade aceita campos de 14 tipos: texto curto, texto longo, número, moeda, e-mail, URL, telefone, data, data/hora, lista (simples e múltipla), checkbox, relação com outra entidade e arquivo.
+Cada entidade aceita campos de 29 tipos, organizados em 8 grupos:
+
+- **Texto e comunicação** — texto curto, texto longo, rich text (HTML), e-mail, URL, telefone, senha/dado sensível
+- **Números e valores** — número, moeda, percentual, avaliação (estrelas 1–5), progresso (0–100%), duração
+- **Data e tempo** — data, data e hora, hora, intervalo de datas
+- **Seleção e listas** — lista (única), lista (múltipla), caixa de seleção, tags livres, usuário do sistema, cor (color picker)
+- **Relacionamentos** — relação com outra entidade
+- **Dados especiais** — UUID (auto-gerado), JSON livre, IP/hostname
+- **Mídia e arquivos** — imagem (PNG/JPG/WEBP/GIF) e arquivo genérico, ambos armazenados como base64 no banco de dados (MEDIUMTEXT, ≈16MB máx.)
 
 **CRUD completo de registros**
 Listagem em três modos — tabela (com ordenação por coluna ASC/DESC), cards e kanban — com filtros avançados por campo (11 operadores), busca global e paginação. Formulário de criação/edição, visualização de detalhe e exclusão — tudo gerado automaticamente a partir da definição de campos. Preferência de visualização salva por usuário e por entidade.

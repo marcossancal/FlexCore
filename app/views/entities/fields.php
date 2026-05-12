@@ -84,7 +84,7 @@
       <div class="card-title" style="font-size:.82rem">💡 <?= __('fields.available_types') ?></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">
         <?php
-        $types = ['text','textarea','number','email','url','phone','date','datetime','select','multiselect','checkbox','currency','relation'];
+        $types = array_keys(allFieldTypes());
         foreach ($types as $t): ?>
         <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--mt2)">
           <span><?= fieldTypeIcon($t) ?></span>
@@ -116,28 +116,48 @@
           <label><?= __('fields.type') ?> *</label>
           <select name="field_type" id="fld-type" onchange="onTipoChange(this.value)" required>
             <option value="">— <?= __('general.none') ?> —</option>
-            <optgroup label="<?= __('fields.types.text') ?>">
+            <optgroup label="Texto e comunicação">
               <option value="text">🔤 <?= __('fields.types.text') ?></option>
               <option value="textarea">📝 <?= __('fields.types.textarea') ?></option>
+              <option value="richtext">✍️ <?= __('fields.types.richtext') ?></option>
               <option value="email">✉️ <?= __('fields.types.email') ?></option>
               <option value="url">🔗 <?= __('fields.types.url') ?></option>
               <option value="phone">📞 <?= __('fields.types.phone') ?></option>
+              <option value="password">🔒 <?= __('fields.types.password') ?></option>
             </optgroup>
-            <optgroup label="<?= __('fields.types.number') ?>">
+            <optgroup label="Números e valores">
               <option value="number">🔢 <?= __('fields.types.number') ?></option>
               <option value="currency">💰 <?= __('fields.types.currency') ?></option>
+              <option value="percent">% <?= __('fields.types.percent') ?></option>
+              <option value="rating">⭐ <?= __('fields.types.rating') ?></option>
+              <option value="progress">🎚 <?= __('fields.types.progress') ?></option>
+              <option value="duration">⏳ <?= __('fields.types.duration') ?></option>
             </optgroup>
-            <optgroup label="<?= __('fields.types.date') ?>">
+            <optgroup label="Data e tempo">
               <option value="date">📅 <?= __('fields.types.date') ?></option>
               <option value="datetime">🕐 <?= __('fields.types.datetime') ?></option>
+              <option value="time">⏱ <?= __('fields.types.time') ?></option>
+              <option value="daterange">📆 <?= __('fields.types.daterange') ?></option>
             </optgroup>
-            <optgroup label="<?= __('fields.types.select') ?>">
+            <optgroup label="Seleção e listas">
               <option value="select">▼ <?= __('fields.types.select') ?></option>
               <option value="multiselect">☑️ <?= __('fields.types.multiselect') ?></option>
               <option value="checkbox">✅ <?= __('fields.types.checkbox') ?></option>
+              <option value="tags">🏷 <?= __('fields.types.tags') ?></option>
+              <option value="user">👤 <?= __('fields.types.user') ?></option>
+              <option value="color">🎨 <?= __('fields.types.color') ?></option>
             </optgroup>
-            <optgroup label="<?= __('fields.types.relation') ?>">
+            <optgroup label="Relacionamentos">
               <option value="relation">🔀 <?= __('fields.types.relation') ?></option>
+            </optgroup>
+            <optgroup label="Dados especiais">
+              <option value="uuid">🆔 <?= __('fields.types.uuid') ?></option>
+              <option value="json">🔣 <?= __('fields.types.json') ?></option>
+              <option value="ip">📡 <?= __('fields.types.ip') ?></option>
+            </optgroup>
+            <optgroup label="Mídia e arquivos">
+              <option value="image">🖼 <?= __('fields.types.image') ?></option>
+              <option value="file">📎 <?= __('fields.types.file') ?></option>
             </optgroup>
           </select>
         </div>
@@ -161,6 +181,14 @@
               <?php endif; ?>
               <?php endforeach; ?>
             </select>
+          </div>
+        </div>
+
+        <div id="fld-maxsize-wrap" style="display:none">
+          <div class="field">
+            <label>Tamanho máximo (MB)</label>
+            <input type="number" name="max_size_mb" id="fld-maxsize" value="5" min="1" max="15" step="1">
+            <div class="hint" style="font-size:.72rem;color:var(--mt);margin-top:4px">Imagem: máx. recomendado 2MB. Arquivo: máx. recomendado 5MB. Limite do MEDIUMTEXT: ~16MB.</div>
           </div>
         </div>
 
@@ -204,6 +232,7 @@ function atualizarFldSlug(v) {
 function onTipoChange(t) {
   document.getElementById('fld-options-wrap').style.display  = ['select','multiselect'].includes(t) ? 'block' : 'none';
   document.getElementById('fld-relation-wrap').style.display = t === 'relation' ? 'block' : 'none';
+  document.getElementById('fld-maxsize-wrap').style.display  = ['image','file'].includes(t) ? 'block' : 'none';
 }
 function editarCampo(f) {
   document.getElementById('field-form-title').textContent = '✏️ <?= __('fields.edit') ?>';

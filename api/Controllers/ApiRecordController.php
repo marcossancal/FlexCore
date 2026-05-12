@@ -305,16 +305,33 @@ class ApiRecordController
                 continue;
             }
 
-            if (in_array($f['field_type'], ['number', 'currency'], true)) {
+            $ft = $f['field_type'];
+            if (isNumericType($ft)) {
+                // number, currency, percent, rating, progress, duration
                 $out[$f['slug']] = $v['val_num'] !== null ? (float) $v['val_num'] : null;
-            } elseif (in_array($f['field_type'], ['date', 'datetime'], true)) {
+            } elseif (isDateType($ft)) {
+                // date, datetime
                 $out[$f['slug']] = $v['val_date'];
-            } elseif ($f['field_type'] === 'multiselect') {
+            } elseif ($ft === 'multiselect' || $ft === 'tags') {
                 $out[$f['slug']] = $v['val_text'] !== null
                     ? json_decode($v['val_text'], true)
                     : [];
-            } elseif ($f['field_type'] === 'checkbox') {
+            } elseif ($ft === 'checkbox') {
                 $out[$f['slug']] = $v['val_text'] === '1';
+            } elseif ($ft === 'daterange') {
+                $out[$f['slug']] = $v['val_text'] !== null
+                    ? json_decode($v['val_text'], true)
+                    : null;
+            } elseif ($ft === 'json') {
+                $out[$f['slug']] = $v['val_text'] !== null
+                    ? json_decode($v['val_text'], true)
+                    : null;
+            } elseif ($ft === 'password') {
+                // Nunca expõe senhas pela API
+                $out[$f['slug']] = null;
+            } elseif ($ft === 'image' || $ft === 'file') {
+                // Retorna apenas flag de existência na listagem; URL base64 no detalhe
+                $out[$f['slug']] = $v['val_text'] !== null ? '[binary]' : null;
             } else {
                 $out[$f['slug']] = $v['val_text'];
             }

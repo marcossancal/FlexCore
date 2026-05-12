@@ -159,19 +159,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         file_put_contents(BASE . '/.installed', date('Y-m-d H:i:s'));
 
         // Gera o .htaccess na raiz se ainda não existir
-        $htaccess = BASE . '/.htaccess';
+        // $_appBase já calculado no topo: dirname(dirname(SCRIPT_NAME))
+        // ex: instalando em /flexcore/install/ → $_appBase = /flexcore
+        //     instalando na raiz /install/     → $_appBase = ''
+        $htaccess    = BASE . '/.htaccess';
+        $rewriteBase = $_appBase !== '' ? "\nRewriteBase {$_appBase}" : '';
         if (!file_exists($htaccess)) {
-            file_put_contents($htaccess, <<<'HTACCESS'
-RewriteEngine On
-Options -Indexes
-
-# Arquivos físicos são servidos diretamente (inclui install/index.php, assets, etc)
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule ^ - [L]
-
-# Tudo mais vai para index.php
-RewriteRule ^ index.php [QSA,L]
-HTACCESS);
+            file_put_contents($htaccess,
+                "RewriteEngine On\n" .
+                "Options -Indexes\n" .
+                $rewriteBase . "\n\n" .
+                "# Arquivos físicos são servidos diretamente\n" .
+                "RewriteCond %{REQUEST_FILENAME} -f\n" .
+                "RewriteRule ^ - [L]\n\n" .
+                "# Tudo mais vai para index.php\n" .
+                "RewriteRule ^ index.php [QSA,L]\n"
+            );
         }
 
         header('Location: ' . installUrl('install') . '?step=3'); exit;

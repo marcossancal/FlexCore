@@ -102,6 +102,35 @@ class EntityController
         redirect('/entities');
     }
 
+    public function bulkDestroy(): void
+    {
+        Auth::require(['admin']);
+        $raw = trim(post('ids', ''));
+        if (!$raw) {
+            flash('err', 'Nenhuma entidade selecionada.');
+            redirect('/entities');
+        }
+
+        // Sanitiza: aceita apenas inteiros separados por vírgula
+        $ids = array_filter(array_map('intval', explode(',', $raw)));
+        if (empty($ids)) {
+            flash('err', 'Seleção inválida.');
+            redirect('/entities');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $ent = DB::one('SELECT name FROM entities WHERE id = ?', [$id]);
+            if (!$ent) continue;
+            DB::run('DELETE FROM entities WHERE id = ?', [$id]);
+            audit('delete_entity', $id, null, "Entidade '{$ent['name']}' excluída em lote");
+            $count++;
+        }
+
+        flash('ok', "{$count} entidade(s) excluída(s) com sucesso.");
+        redirect('/entities');
+    }
+
     public function saveApiResponses(int $id): void
     {
         Auth::require(['admin']);

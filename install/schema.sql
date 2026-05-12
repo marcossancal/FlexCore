@@ -35,6 +35,56 @@ CREATE TABLE IF NOT EXISTS entities (
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ── Entity Fields ────────────────────────────────────────────────────
+-- field_type suportados (29 tipos):
+--
+-- TEXTO E COMUNICAÇÃO:
+--   text        — Texto curto                     → val_text
+--   textarea    — Texto longo (plain)              → val_text
+--   richtext    — Texto rico (HTML sanitizado)     → val_text
+--   email       — E-mail (input type=email)        → val_text
+--   url         — URL (input type=url)             → val_text
+--   phone       — Telefone                         → val_text
+--   password    — Senha / dado mascarado            → val_text
+--
+-- NÚMEROS E VALORES:
+--   number      — Número decimal                   → val_num
+--   currency    — Moeda (R$)                       → val_num
+--   percent     — Percentual (0–100)               → val_num
+--   rating      — Avaliação 1–5 estrelas           → val_num
+--   progress    — Progresso 0–100%                 → val_num
+--   duration    — Duração em segundos              → val_num
+--
+-- DATA E TEMPO:
+--   date        — Data (YYYY-MM-DD)                → val_date
+--   datetime    — Data e hora                      → val_date
+--   time        — Hora (HH:MM)                     → val_text
+--   daterange   — Intervalo JSON {start,end}        → val_text
+--
+-- SELEÇÃO E LISTAS:
+--   select      — Lista escolha única              → val_text
+--   multiselect — Lista múltipla (JSON array)      → val_text
+--   checkbox    — Booleano "0"/"1"                 → val_text
+--   tags        — Tags livres (JSON array)         → val_text
+--   user        — ID de usuário do sistema         → val_text
+--   color       — Cor hexadecimal (#rrggbb)        → val_text
+--
+-- RELACIONAMENTOS:
+--   relation    — ID de registro de outra entidade → val_text
+--
+-- DADOS ESPECIAIS:
+--   uuid        — UUID v4 auto-gerado              → val_text
+--   json        — Objeto JSON livre                → val_text
+--   ip          — Endereço IP / hostname           → val_text
+--
+-- MÍDIA E ARQUIVOS (armazenados como base64 em val_text, MEDIUMTEXT ≈16MB):
+--   image       — Imagem (PNG/JPG/WEBP/GIF)        → val_text (data:image/...)
+--   file        — Arquivo genérico                 → val_text (data:mime/...)
+--
+-- options_json:
+--   select/multiselect → ["Opção 1","Opção 2",...]
+--   image/file         → {"max_size_mb": 5, "filename": "nome.pdf"}
+--   demais tipos       → null
 CREATE TABLE IF NOT EXISTS entity_fields (
   id                 INT AUTO_INCREMENT PRIMARY KEY,
   entity_id          INT NOT NULL,

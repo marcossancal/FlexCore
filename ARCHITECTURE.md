@@ -205,6 +205,31 @@ updated_at                      val_text, val_num, val_date
 
 O padrão EAV (Entity-Attribute-Value) em `record_values` permite campos dinâmicos sem alterar o schema. Três colunas de valor (`val_text`, `val_num`, `val_date`) para evitar conversões e melhorar performance em buscas numéricas e por data.
 
+**Tipos de campo suportados (29 tipos)** — mapeados para a coluna de storage correta pelo `RecordRepository::saveValue()` via `isNumericType()` e `isDateType()` de `lib/helpers.php`:
+
+| Grupo | Tipos | Coluna |
+|-------|-------|--------|
+| Texto e comunicação | `text`, `textarea`, `richtext`, `email`, `url`, `phone`, `password` | `val_text` |
+| Números e valores | `number`, `currency`, `percent`, `rating`, `progress`, `duration` | `val_num` |
+| Data e tempo | `date`, `datetime` | `val_date` |
+| Data e tempo (texto) | `time`, `daterange` | `val_text` |
+| Seleção e listas | `select`, `multiselect`, `checkbox`, `tags`, `user`, `color` | `val_text` |
+| Relacionamentos | `relation` | `val_text` |
+| Dados especiais | `uuid`, `json`, `ip` | `val_text` |
+| Mídia e arquivos | `image`, `file` | `val_text` (base64, MEDIUMTEXT ≈16MB) |
+
+**Armazenamento de imagem e arquivo como base64** — a decisão de usar base64 em `val_text` (MEDIUMTEXT, suporta até 16MB) elimina dependência de sistema de arquivos, mantendo o FlexCore 100% portável em hospedagens compartilhadas. A conversão FileReader → base64 ocorre no browser antes do POST. Um arquivo de 5MB vira ≈6.7MB no banco. Recomendado: imagens até 2MB, arquivos até 5MB.
+
+**Tipos com comportamento especial no `RecordService::saveValues()`:**
+- `checkbox` — `isset($input[$key])` → `"1"` ou `"0"` (checkbox HTML não envia campo se desmarcado)
+- `multiselect` / `tags` — converte array PHP para JSON string
+- `uuid` — chama `generateUuid()` (RFC 4122 v4) se o valor estiver vazio
+- `duration` — aceita string `"H:M:S"` e converte para segundos inteiros em `val_num`
+- `daterange` — constrói JSON `{"start":"YYYY-MM-DD","end":"YYYY-MM-DD"}` a partir de dois campos `_start` / `_end`
+- `image` / `file` — lê `field_N_file_data` (base64 gerado no front) ou `field_N_keep` (preserva valor existente)
+- `password` — sem conversão especial; armazenado em texto plano em `val_text` (responsabilidade do operador criptografar se necessário)
+- `json` — descartado se `json_decode()` retornar `null` (JSON inválido)
+
 **Demais tabelas:**
 
 ```
