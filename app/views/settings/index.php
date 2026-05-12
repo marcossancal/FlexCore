@@ -5,7 +5,14 @@
 </div>
 
 <?php $tab = get('tab','geral'); ?>
-<div class="tabs" style="display:flex;gap:4px;margin-bottom:22px;border-bottom:1px solid var(--bd);flex-wrap:wrap">
+<div class="tabs" style="display: flex;
+    gap: 10px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--bd);
+    width: 100%;
+    overflow-x: overlay;
+    overflow-y: hidden;
+    padding-bottom: 10px;">
   <?php foreach ([
     'geral'    => __('settings.tab_general'),
     'tema'     => __('settings.tab_theme'),
@@ -167,8 +174,8 @@ function clearColor(inputId, txtId, name) {
 </script>
 
 <?php elseif ($tab === 'usuarios'): ?>
-<div class="row2" style="gap:18px;align-items:start">
-  <div style="flex:2">
+<div class="row2" style="gap:18px;align-items:start;overflow:hidden">
+  <div style="flex:2;min-width:0;overflow:hidden">
     <div class="card">
       <div class="card-title"><?= __('users.title') ?></div>
       <div class="tbl-wrap">

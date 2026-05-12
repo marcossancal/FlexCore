@@ -10,7 +10,7 @@ partial('layout/header');
     <div class="sec-title">⚡ <?= __('automations.title') ?></div>
     <div class="sec-sub"><?= __('automations.no_automations') ?></div>
   </div>
-  <button class="btn btn-primary" onclick="openBuilder()">+ <?= __('automations.new') ?></button>
+  <button class="btn btn-primary" onclick="openBuilder()"> <?= __('automations.new') ?></button>
 </div>
 
 <div class="stats" style="margin-bottom:20px">
@@ -23,7 +23,7 @@ partial('layout/header');
 <div class="card" style="text-align:center;padding:48px">
   <div style="font-size:2.5rem;margin-bottom:14px">⚡</div>
   <div style="font-weight:700;margin-bottom:8px"><?= __('automations.no_automations') ?></div>
-  <button class="btn btn-primary" onclick="openBuilder()" style="margin:0 auto">+ <?= __('automations.new') ?></button>
+  <button class="btn btn-primary" onclick="openBuilder()" style="margin:0 auto"> <?= __('automations.new') ?></button>
 </div>
 <?php else: ?>
 <div class="card" style="padding:0">
@@ -75,7 +75,7 @@ partial('layout/header');
 
 <!-- Builder Modal -->
 <div id="builder-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px">
-  <div style="background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:28px;width:100%;max-width:640px;margin:auto">
+  <div style="backdrop-filter:blur(7px);background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:28px;width:100%;max-width:640px;margin:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <div style="font-family:var(--fd);font-weight:700" id="builder-title"><?= __('automations.new') ?></div>
       <button onclick="closeBuilder()" style="background:none;border:none;color:var(--mt);cursor:pointer;font-size:1.2rem">✕</button>

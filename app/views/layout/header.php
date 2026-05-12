@@ -49,8 +49,8 @@ if ($isDark) {
       --sb:224px;--tbh:52px;--tr:.15s cubic-bezier(.4,0,.2,1);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;line-height:1.5;display:flex;-webkit-font-smoothing:antialiased}
+    html{min-height:100%}
+    body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;line-height:1.5;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
     /* ── SIDEBAR ── */
     .sidebar{
@@ -92,7 +92,7 @@ if ($isDark) {
     .sb-overlay.open{display:block}
 
     /* ── MAIN ── */
-    .main{margin-left:var(--sb);flex:1;min-height:100vh;display:flex;flex-direction:column}
+    .main{margin-left:var(--sb);flex:1;min-height:100vh;display:flex;flex-direction:column;min-width:0}
 
     /* ── TOPBAR — mesma cor do sidebar, unidade visual ── */
     .topbar{
@@ -113,7 +113,7 @@ if ($isDark) {
     .btn-menu:hover{background:var(--sf3);color:var(--tx)}
 
     /* ── CONTENT ── */
-    .content{width:100%;padding:22px;flex:1;background:var(--bg)}
+    .content{width:100%;padding:22px;flex:1;background:var(--bg);min-height:0;overflow-x:hidden}
 
     /* ── FLASH ── */
     .flash{border-radius:var(--r2);padding:10px 14px;margin-bottom:18px;font-size:.8rem;display:flex;align-items:center;gap:9px}
@@ -200,7 +200,7 @@ if ($isDark) {
     @media(max-width:768px){
       .sidebar{transform:translateX(-100%);box-shadow:4px 0 24px rgba(0,0,0,.3)}
       .sidebar.open{transform:translateX(0)}
-      .main{margin-left:0}
+      .main{margin-left:0;width:100%;overflow-x:hidden}
       .btn-menu{display:flex}
       .content{padding:16px}
       .topbar{padding:0 16px}

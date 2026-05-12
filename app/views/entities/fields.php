@@ -210,7 +210,7 @@
 
         <div class="form-actions" style="margin-top:12px">
           <button type="button" onclick="resetFieldForm()" id="btn-fld-cancel" class="btn btn-ghost" style="display:none"><?= __('general.cancel') ?></button>
-          <button type="submit" id="btn-fld-submit" class="btn btn-primary">+ <?= __('fields.add_field') ?></button>
+          <button type="submit" id="btn-fld-submit" class="btn btn-primary"> <?= __('fields.add_field') ?></button>
         </div>
       </form>
     </div>

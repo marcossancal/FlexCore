@@ -12,7 +12,7 @@ partial('layout/header');
   </div>
   <div class="sec-actions">
     <a href="<?= url('/api/docs') ?>" class="btn btn-ghost btn-sm">📄 <?= __('nav.api_docs') ?></a>
-    <button class="btn btn-primary" onclick="openCreate()">+ <?= __('api.new_key') ?></button>
+    <button class="btn btn-primary" onclick="openCreate()"><?= __('api.new_key') ?></button>
   </div>
 </div>
 
@@ -81,7 +81,7 @@ partial('layout/header');
 
 <!-- Modal -->
 <div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center">
-  <div style="background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:28px;width:100%;max-width:540px;margin:20px;max-height:90vh;overflow-y:auto">
+  <div style="backdrop-filter: blur(2px);background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:28px;width:100%;max-width:540px;margin:20px;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div style="font-family:var(--fd);font-weight:700" id="modal-title"><?= __('api.new_key') ?></div>
       <button onclick="closeModal()" style="background:none;border:none;color:var(--mt);cursor:pointer;font-size:1.2rem">✕</button>

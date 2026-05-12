@@ -29,7 +29,7 @@
     <div class="sec-title">⚙️ <?= __('entities.title') ?></div>
     <div class="sec-sub"><?= __('entities.next_step_desc') ?></div>
   </div>
-  <a href="<?= url('/entities/new') ?>" class="btn btn-primary">+ <?= __('entities.new') ?></a>
+  <a href="<?= url('/entities/new') ?>" class="btn btn-primary"> <?= __('entities.new') ?></a>
 </div>
 
 <?php if (empty($entities)): ?>
@@ -37,7 +37,7 @@
   <div style="font-size:2.5rem;margin-bottom:12px">🧩</div>
   <div style="font-family:var(--fd);font-size:1.1rem;font-weight:700;margin-bottom:8px"><?= __('entities.no_entities') ?></div>
   <div style="color:var(--mt);margin-bottom:24px"><?= __('entities.next_step_desc') ?></div>
-  <a href="<?= url('/entities/new') ?>" class="btn btn-primary">+ <?= __('entities.create_first') ?></a>
+  <a href="<?= url('/entities/new') ?>" class="btn btn-primary"> <?= __('entities.create_first') ?></a>
 </div>
 <?php else: ?>
 

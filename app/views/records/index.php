@@ -19,7 +19,7 @@ partial('layout/header', [
   </div>
   <div class="sec-actions">
     <?php if (count($fields) > 0): ?>
-    <a href="<?= url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>">+ <?= __('records.new') ?></a>
+    <a href="<?= url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>"> <?= __('records.new') ?></a>
     <?php endif; ?>
     <?php if (Auth::user()['role']==='admin'): ?>
     <a href="<?= url('/entities/' . $entity['id'] . '/fields') ?>" class="btn btn-ghost btn-sm">🔧 <?= __('entities.fields') ?></a>
@@ -141,7 +141,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
             <input type="text" id="filter-value" placeholder="Valor…"
                    style="width:100%;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--r2);color:var(--tx);padding:7px 10px;font-family:var(--fb);font-size:.83rem;outline:none">
           </div>
-          <button type="button" onclick="applyFilter()" class="btn btn-primary btn-sm" style="width:100%;justify-content:center">+ Aplicar filtro</button>
+          <button type="button" onclick="applyFilter()" class="btn btn-primary btn-sm" style="width:100%;justify-content:center"> Aplicar filtro</button>
           <input type="hidden" id="filter-built" name="filters[]" value="" disabled>
         </form>
       </div>
@@ -189,7 +189,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
       <?php if ($hasActiveFilters): ?>
       <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost">Limpar filtros</a>
       <?php else: ?>
-      <a href="<?= url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>">+ <?= __('records.new') ?></a>
+      <a href="<?= url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>"> <?= __('records.new') ?></a>
       <?php endif ?>
     </div>
 

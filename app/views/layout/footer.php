@@ -17,7 +17,7 @@
       <?= __('layout.footer.version') ?> <strong style="color:var(--mt2)"><?= defined('APP_VERSION') ? h(APP_VERSION) : '—' ?></strong>
     </span>
     <span>
-      <?= __('layout.footer.powered_by') ?> ❤️
+      <?= __('layout.footer.powered_by') ?> ❤️ - <a href="https://sancalproducoes.com.br">SanCal Produções</a>
       &nbsp;·&nbsp;
       <?= date('Y') ?> <?= __('layout.footer.rights') ?>
     </span>

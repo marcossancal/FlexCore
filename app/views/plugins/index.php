@@ -70,7 +70,7 @@ partial('layout/header');
 
 <!-- Upload modal -->
 <div id="up-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;align-items:center;justify-content:center">
-  <div style="background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:28px;width:100%;max-width:440px;margin:20px">
+  <div style="backdrop-filter:blur(7px); background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:28px;width:100%;max-width:440px;margin:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div style="font-family:var(--fd);font-weight:700"><?= __('plugins.install') ?></div>
       <button onclick="document.getElementById('up-modal').style.display='none'"

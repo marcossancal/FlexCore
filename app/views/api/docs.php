@@ -664,7 +664,7 @@ Authorization: Bearer fc_sua_chave</div>
         <div style="font-size:2.5rem;margin-bottom:14px">📋</div>
         <div style="font-weight:700;margin-bottom:8px">Nenhuma entidade criada ainda</div>
         <div style="color:var(--mt);margin-bottom:20px;font-size:.875rem">Crie entidades e campos no painel para gerar os endpoints automaticamente.</div>
-        <a href="<?= url('/entities/new') ?>" class="btn btn-primary" style="display:inline-flex">+ Criar primeira entidade</a>
+        <a href="<?= url('/entities/new') ?>" class="btn btn-primary" style="display:inline-flex">Criar primeira entidade</a>
       </div>
     </div>
     <?php endif; ?>
