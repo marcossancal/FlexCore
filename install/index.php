@@ -169,6 +169,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "RewriteEngine On\n" .
                 "Options -Indexes\n" .
                 $rewriteBase . "\n\n" .
+                "# Deixa o OPTIONS passar para o PHP (não bloquear no Apache)\n".
+                "RewriteCond %{REQUEST_METHOD} OPTIONS\n".
+                "RewriteRule ^ index.php [QSA,L]\n".
                 "# Arquivos físicos são servidos diretamente\n" .
                 "RewriteCond %{REQUEST_FILENAME} -f\n" .
                 "RewriteRule ^ - [L]\n\n" .

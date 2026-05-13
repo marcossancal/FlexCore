@@ -19,7 +19,28 @@
 define('BASE',        __DIR__);
 define('APP_VERSION', '1.0.0');  // ← altere aqui a cada release
 
+
+
 require_once __DIR__ . '/config/bootstrap.php';
+
+// ── CORS ─────────────────────────────────────────────────────────────
+// Roda antes de qualquer lógica. header_remove() limpa o que o Apache
+// possa ter adicionado antes, garantindo que só sai o nosso valor.
+$_corsOrigin = '*'; // produção: troque por 'https://docfinder.seusite.com'
+header_remove('Access-Control-Allow-Origin');
+header('Access-Control-Allow-Origin: '  . $_corsOrigin);
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization');
+header('Access-Control-Allow-Credentials: false');
+header('Access-Control-Max-Age: 86400');
+
+// Preflight: responde imediatamente SEM passar pelo router ou auth
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit();
+}
+// ─────────────────────────────────────────────────────────────────────
+
 
 // ── 1. Guard de instalação ───────────────────────────────────────────
 $_base      = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
