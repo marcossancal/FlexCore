@@ -115,29 +115,46 @@ class RecordRepository
         );
     }
 
-public function countFiltered(int $entityId, string $whereExtra, array $bindParams): int
-{
-    $sql = "SELECT COUNT(*) AS n FROM entity_records r WHERE r.entity_id = ? {$whereExtra}";
-    $row = DB::one($sql, array_merge([$entityId], $bindParams));
-    return (int) ($row['n'] ?? 0);
-}
+    public function countFiltered(int $entityId, string $whereExtra, array $bindParams): int
+    {
+        $sql = "SELECT COUNT(*) AS n FROM entity_records r WHERE r.entity_id = ? {$whereExtra}";
+        $row = DB::one($sql, array_merge([$entityId], $bindParams));
+        return (int) ($row['n'] ?? 0);
+    }
 
-public function listPaginated(int $entityId, string $whereExtra, array $bindParams, string $orderSql, int $limit, int $offset): array
-{
-    $sql = "SELECT r.* FROM entity_records r WHERE r.entity_id = ? {$whereExtra} {$orderSql} LIMIT {$limit} OFFSET {$offset}";
-    return DB::q($sql, array_merge([$entityId], $bindParams));
-}
+    public function listPaginated(int $entityId, string $whereExtra, array $bindParams, string $orderSql, int $limit, int $offset): array
+    {
+        $sql = "SELECT r.* FROM entity_records r WHERE r.entity_id = ? {$whereExtra} {$orderSql} LIMIT {$limit} OFFSET {$offset}";
+        return DB::q($sql, array_merge([$entityId], $bindParams));
+    }
 
-public function searchValueIds(array $fieldIds, string $q): array
-{
-    if (empty($fieldIds)) return [];
-    $in   = implode(',', array_map('intval', $fieldIds));
-    $like = '%' . $q . '%';
-    $rows = DB::q(
-        "SELECT DISTINCT record_id FROM record_values WHERE field_id IN ({$in}) AND val_text LIKE ?",
-        [$like]
-    );
-    return array_column($rows, 'record_id');
-}
+    public function searchValueIds(array $fieldIds, string $q): array
+    {
+        if (empty($fieldIds)) return [];
+        $in   = implode(',', array_map('intval', $fieldIds));
+        $like = '%' . $q . '%';
+        $rows = DB::q(
+            "SELECT DISTINCT record_id FROM record_values WHERE field_id IN ({$in}) AND val_text LIKE ?",
+            [$like]
+        );
+        return array_column($rows, 'record_id');
+    }
+    public function loadValuesBatch(array $recordIds, array $fields): array
+    {
+        if (empty($recordIds)) return [];
+
+        $in = implode(',', array_map('intval', $recordIds));
+        $rows = DB::q(
+            "SELECT record_id, field_id, val_text, val_num, val_date
+            FROM record_values
+            WHERE record_id IN ({$in})",
+            []
+        );
+        $map = [];
+        foreach ($rows as $v) {
+            $map[$v['record_id']][$v['field_id']] = $v;
+        }
+        return $map;
+    }
 
 }

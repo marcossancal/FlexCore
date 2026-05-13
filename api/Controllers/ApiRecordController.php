@@ -27,7 +27,6 @@ use FlexCore\Api\Formatters\ApiResponse;
 class ApiRecordController
 {
     // ── GET /api/v1/entities ─────────────────────────────────────────
-
     public function entities(): void
     {
         $rows = \DB::q(
@@ -76,8 +75,11 @@ class ApiRecordController
             array_merge([$entity['id']], $params)
         );
 
+        $ids    = array_column($records, 'id');
+        $valMap = $this->loadValuesBySlugBatch($ids, $fields);
+
         foreach ($records as &$r) {
-            $r['fields'] = $this->loadValuesBySlug($r['id'], $fields);
+            $r['fields'] = $valMap[$r['id']] ?? [];
         }
         unset($r);
 
@@ -286,60 +288,17 @@ class ApiRecordController
     {
         $rows = \DB::q(
             'SELECT field_id, val_text, val_num, val_date
-               FROM record_values WHERE record_id = ?',
+            FROM record_values WHERE record_id = ?',
             [$recordId]
         );
 
-        // Mapeia field_id → row
         $byId = [];
         foreach ($rows as $v) {
             $byId[$v['field_id']] = $v;
         }
 
-        $out = [];
-        foreach ($fields as $f) {
-            $v = $byId[$f['id']] ?? null;
-
-            if ($v === null) {
-                $out[$f['slug']] = null;
-                continue;
-            }
-
-            $ft = $f['field_type'];
-            if (isNumericType($ft)) {
-                // number, currency, percent, rating, progress, duration
-                $out[$f['slug']] = $v['val_num'] !== null ? (float) $v['val_num'] : null;
-            } elseif (isDateType($ft)) {
-                // date, datetime
-                $out[$f['slug']] = $v['val_date'];
-            } elseif ($ft === 'multiselect' || $ft === 'tags') {
-                $out[$f['slug']] = $v['val_text'] !== null
-                    ? json_decode($v['val_text'], true)
-                    : [];
-            } elseif ($ft === 'checkbox') {
-                $out[$f['slug']] = $v['val_text'] === '1';
-            } elseif ($ft === 'daterange') {
-                $out[$f['slug']] = $v['val_text'] !== null
-                    ? json_decode($v['val_text'], true)
-                    : null;
-            } elseif ($ft === 'json') {
-                $out[$f['slug']] = $v['val_text'] !== null
-                    ? json_decode($v['val_text'], true)
-                    : null;
-            } elseif ($ft === 'password') {
-                // Nunca expõe senhas pela API
-                $out[$f['slug']] = null;
-            } elseif ($ft === 'image' || $ft === 'file') {
-                // Retorna apenas flag de existência na listagem; URL base64 no detalhe
-                $out[$f['slug']] = $v['val_text'] !== null ? '[binary]' : null;
-            } else {
-                $out[$f['slug']] = $v['val_text'];
-            }
-        }
-
-        return $out;
+        return $this->hydrateFields($byId, $fields);
     }
-
     /**
      * Monta cláusula WHERE extra para filtros de listagem.
      *
@@ -426,4 +385,62 @@ class ApiRecordController
         return \FlexCore\Core\Container\Container::getInstance()
             ->make(\FlexCore\App\Services\RecordService::class);
     }
+
+    private function loadValuesBySlugBatch(array $recordIds, array $fields): array
+    {
+        if (empty($recordIds)) return [];
+
+        $in   = implode(',', array_map('intval', $recordIds));
+        $rows = \DB::q(
+            "SELECT record_id, field_id, val_text, val_num, val_date
+            FROM record_values
+            WHERE record_id IN ({$in})"
+        );
+
+        $byRecord = [];
+        foreach ($rows as $v) {
+            $byRecord[$v['record_id']][$v['field_id']] = $v;
+        }
+
+        $out = [];
+        foreach ($recordIds as $rid) {
+            $out[$rid] = $this->hydrateFields($byRecord[$rid] ?? [], $fields);
+        }
+
+        return $out;
+    }
+
+    private function hydrateFields(array $byId, array $fields): array
+    {
+        $out = [];
+        foreach ($fields as $f) {
+            $v  = $byId[$f['id']] ?? null;
+            $ft = $f['field_type'];
+
+            if ($v === null) {
+                $out[$f['slug']] = null;
+                continue;
+            }
+
+            if (isNumericType($ft)) {
+                $out[$f['slug']] = $v['val_num'] !== null ? (float) $v['val_num'] : null;
+            } elseif (isDateType($ft)) {
+                $out[$f['slug']] = $v['val_date'];
+            } elseif ($ft === 'multiselect' || $ft === 'tags') {
+                $out[$f['slug']] = $v['val_text'] !== null ? json_decode($v['val_text'], true) : [];
+            } elseif ($ft === 'checkbox') {
+                $out[$f['slug']] = $v['val_text'] === '1';
+            } elseif ($ft === 'daterange' || $ft === 'json') {
+                $out[$f['slug']] = $v['val_text'] !== null ? json_decode($v['val_text'], true) : null;
+            } elseif ($ft === 'password') {
+                $out[$f['slug']] = null;
+            } elseif ($ft === 'image' || $ft === 'file') {
+                $out[$f['slug']] = $v['val_text'] !== null ? '[binary]' : null;
+            } else {
+                $out[$f['slug']] = $v['val_text'];
+            }
+        }
+        return $out;
+    }
+
 }
