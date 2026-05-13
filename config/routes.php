@@ -81,6 +81,7 @@ $router->get( '/automations/{id}/logs',      [AutomationController::class, 'logs
 $router->get( '/plugins',                    [PluginController::class, 'index']);
 $router->get( '/plugins/docs',               [PluginController::class, 'docs']);
 $router->post('/plugins/install',            [PluginController::class, 'install']);
+$router->post('/plugins/install-from-registry', [PluginController::class, 'installFromRegistry']);
 $router->post('/plugins/{slug}/toggle',      [PluginController::class, 'toggle']);
 $router->post('/plugins/{slug}/settings',    [PluginController::class, 'saveSettings']);
 $router->post('/plugins/{slug}/uninstall',   [PluginController::class, 'uninstall']);

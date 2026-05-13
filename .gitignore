@@ -5,4 +5,5 @@
 
 # Storage (generated at runtime)
 storage
+plugins/*
 stress_test/.venv
