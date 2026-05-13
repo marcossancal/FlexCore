@@ -64,6 +64,11 @@
               <?php if (in_array($f['field_type'],['select','multiselect']) && $f['options_json']): ?>
               · <?= count(json_decode($f['options_json'],true)) ?> opções
               <?php endif; ?>
+              <?php if ($f['field_type']==='formula' && $f['options_json']): ?>
+              <?php $fm = json_decode($f['options_json'],true); ?>
+              · <code style="color:var(--ac2);font-size:.7rem"><?= h(mb_substr($fm['expression']??'',0,40)) ?></code>
+              [<?= h($fm['output']??'number') ?>]
+              <?php endif; ?>
             </div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
@@ -159,6 +164,9 @@
               <option value="image">🖼 <?= __('fields.types.image') ?></option>
               <option value="file">📎 <?= __('fields.types.file') ?></option>
             </optgroup>
+            <optgroup label="Campos calculados">
+              <option value="formula">∑ <?= __('fields.types.formula') ?></option>
+            </optgroup>
           </select>
         </div>
 
@@ -189,6 +197,35 @@
             <label>Tamanho máximo (MB)</label>
             <input type="number" name="max_size_mb" id="fld-maxsize" value="5" min="1" max="15" step="1">
             <div class="hint" style="font-size:.72rem;color:var(--mt);margin-top:4px">Imagem: máx. recomendado 2MB. Arquivo: máx. recomendado 5MB. Limite do MEDIUMTEXT: ~16MB.</div>
+          </div>
+        </div>
+
+        <div id="fld-formula-wrap" style="display:none">
+          <div class="field">
+            <label>∑ Expressão da Fórmula</label>
+            <textarea name="formula_expression" id="fld-formula-expr"
+                      style="min-height:80px;font-family:monospace;font-size:.83rem"
+                      placeholder="Ex: {preco} * {quantidade}"></textarea>
+            <div class="hint" style="font-size:.71rem;color:var(--mt);margin-top:6px;line-height:1.5">
+              Use <code>{slug_do_campo}</code> para referenciar outros campos.<br>
+              Funções: <code>SUM(a,b)</code> <code>AVG(a,b)</code> <code>MIN(a,b)</code> <code>MAX(a,b)</code>
+              <code>ROUND(v,2)</code> <code>ABS(v)</code> <code>IF(cond, sim, nao)</code><br>
+              Operadores: <code>+ - * / ( )</code><br>
+              Exemplos:<br>
+              • Margem: <code>({preco} - {custo}) / {preco} * 100</code><br>
+              • Média: <code>AVG(nota1, nota2, nota3)</code><br>
+              • Desconto condicional: <code>IF({quantidade} >= 10, {preco} * 0.9, {preco})</code>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tipo de saída</label>
+            <select name="formula_output" id="fld-formula-output">
+              <option value="number">🔢 Número</option>
+              <option value="currency">💰 Moeda (R$)</option>
+              <option value="percent">% Percentual</option>
+              <option value="text">🔤 Texto</option>
+            </select>
+            <div class="hint" style="font-size:.71rem;color:var(--mt);margin-top:4px">Define como o resultado será formatado na exibição.</div>
           </div>
         </div>
 
@@ -233,6 +270,7 @@ function onTipoChange(t) {
   document.getElementById('fld-options-wrap').style.display  = ['select','multiselect'].includes(t) ? 'block' : 'none';
   document.getElementById('fld-relation-wrap').style.display = t === 'relation' ? 'block' : 'none';
   document.getElementById('fld-maxsize-wrap').style.display  = ['image','file'].includes(t) ? 'block' : 'none';
+  document.getElementById('fld-formula-wrap').style.display  = t === 'formula' ? 'block' : 'none';
 }
 function editarCampo(f) {
   document.getElementById('field-form-title').textContent = '✏️ <?= __('fields.edit') ?>';
@@ -247,7 +285,12 @@ function editarCampo(f) {
   onTipoChange(f.field_type);
   if (f.options_json) {
     var opts = JSON.parse(f.options_json);
-    document.getElementById('fld-options').value = opts.join('\n');
+    if (f.field_type === 'formula') {
+      document.getElementById('fld-formula-expr').value   = opts.expression || '';
+      document.getElementById('fld-formula-output').value = opts.output     || 'number';
+    } else if (Array.isArray(opts)) {
+      document.getElementById('fld-options').value = opts.join('\n');
+    }
   }
   if (f.relation_entity_id) document.getElementById('fld-relation').value = f.relation_entity_id;
   document.getElementById('btn-fld-submit').textContent = '💾 <?= __('general.save') ?>';
@@ -261,6 +304,7 @@ function resetFieldForm() {
   document.getElementById('fld-id').value = '';
   document.getElementById('fld-options-wrap').style.display = 'none';
   document.getElementById('fld-relation-wrap').style.display = 'none';
+  document.getElementById('fld-formula-wrap').style.display = 'none';
   document.getElementById('btn-fld-submit').textContent = '+ <?= __('fields.add_field') ?>';
   document.getElementById('btn-fld-cancel').style.display = 'none';
 }

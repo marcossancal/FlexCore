@@ -397,6 +397,24 @@ partial('layout/header', [
               </select>
               <?php break;
 
+            // ── Formula (read-only, computed on save) ─────────────
+            case 'formula':
+              $fMeta   = !empty($f['options_json']) ? (json_decode($f['options_json'], true) ?? []) : [];
+              $fOutput = $fMeta['output'] ?? 'number';
+              $fExpr   = $fMeta['expression'] ?? '';
+              $fDisplay = renderFieldValue($f, $currentVal);
+              ?>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <div style="background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--r2);padding:8px 14px;font-size:1rem;font-weight:700;color:var(--ac);min-width:80px;text-align:right">
+                  <?= $currentVal !== null && $currentVal !== '' ? $fDisplay : '<span style="color:var(--mt);font-weight:400">calculado ao salvar</span>' ?>
+                </div>
+                <div style="font-size:.72rem;color:var(--mt);font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<?= h($fExpr) ?>">
+                  ∑ <?= h(mb_substr($fExpr, 0, 60)).(mb_strlen($fExpr)>60?'…':'') ?>
+                </div>
+              </div>
+              <div class="hint" style="margin-top:4px">Campo calculado automaticamente. Não editável.</div>
+              <?php break;
+
             // ── Default (fallback) ────────────────────────────────────
             default: ?>
               <input type="text" name="<?= h($name) ?>" value="<?= h($currentVal ?? '') ?>" <?= $required ?>>

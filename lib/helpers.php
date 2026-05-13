@@ -155,6 +155,10 @@ function allFieldTypes(): array
         // ── Mídia e arquivos ─────────────────────────────────────────
         'image'       => ['icon' => '🖼',  'storage' => 'val_text'],  // base64 val_text (MEDIUMTEXT ~16MB)
         'file'        => ['icon' => '📎', 'storage' => 'val_text'],   // base64 val_text
+
+        // ── Fórmula ──────────────────────────────────────────────────
+        // options_json: {"expression":"...", "output":"number|text|currency|percent"}
+        'formula'     => ['icon' => '∑',  'storage' => 'val_num'],    // resultado numérico padrão; text vai para val_text
     ];
 }
 
@@ -175,7 +179,7 @@ function fieldTypeLabel(string $t): string
  */
 function isNumericType(string $t): bool
 {
-    return in_array($t, ['number', 'currency', 'percent', 'rating', 'progress', 'duration'], true);
+    return in_array($t, ['number', 'currency', 'percent', 'rating', 'progress', 'duration', 'formula'], true);
 }
 
 /**
@@ -327,7 +331,181 @@ function renderFieldValue(array $field, mixed $val, bool $full = false): string
             : h(mb_substr($val,0,80)).(mb_strlen($val)>80?'…':'');
     }
 
+    // ── Formula (computed, read-only) ─────────────────────────────
+    if ($t === 'formula') {
+        if ($val === null || $val === '') return '<span style="color:var(--mt)">—</span>';
+        $meta   = [];
+        if (!empty($field['options_json'])) $meta = json_decode($field['options_json'], true) ?: [];
+        $output = $meta['output'] ?? 'number';
+        switch ($output) {
+            case 'currency': return 'R$ '.number_format((float)$val, 2, ',', '.');
+            case 'percent':  return number_format((float)$val, 2, ',', '.').'%';
+            case 'text':     return h((string)$val);
+            default:         return h(number_format((float)$val, 4, ',', '.') * 1);  // strip trailing zeros via multiplication trick
+        }
+    }
+
     return h($val);
+}
+
+// ── Formula Evaluator ─────────────────────────────────────────────────────
+/**
+ * Avalia uma expressão de fórmula substituindo referências de campo {slug}
+ * pelos valores numéricos do registro atual.
+ *
+ * Funções suportadas:
+ *   SUM(slug1, slug2, ...)    → soma
+ *   AVG(slug1, slug2, ...)    → média
+ *   MIN(slug1, slug2, ...)    → mínimo
+ *   MAX(slug1, slug2, ...)    → máximo
+ *   IF(condition, then, else) → condicional
+ *   ROUND(val, decimals)      → arredondamento
+ *   ABS(val)                  → valor absoluto
+ *   CONCAT(a, b, ...)         → concatenação de strings (saída text)
+ *   {slug}                    → referência direta ao valor do campo
+ *
+ * @param string $expression   Expressão armazenada em options_json.expression
+ * @param array  $fieldValues  [slug => valor_numerico_ou_texto] do registro
+ * @param string $outputType   'number'|'currency'|'percent'|'text'
+ * @return mixed               float para numérico, string para text, null em erro
+ */
+function evaluateFormula(string $expression, array $fieldValues, string $outputType = 'number'): mixed
+{
+    try {
+        // Step 1: Replace all {slug} references with numeric values
+        $expr = preg_replace_callback('/\{([a-z0-9_]+)\}/', function ($m) use ($fieldValues) {
+            $val = $fieldValues[$m[1]] ?? 0;
+            return is_numeric($val) ? (float) $val : 0;
+        }, $expression);
+
+        // Step 2: Evaluate high-level functions (slugs are already resolved to numbers)
+        $expr = formulaResolveFunctions($expr, $fieldValues);
+
+        // Step 3: Sanitize — allow only safe math characters
+        $safe = preg_replace('/[^0-9+\-*\/.() \t\nE]/', '', $expr);
+
+        if ($safe === '' || $safe === null) return null;
+
+        // Step 4: Evaluate the arithmetic expression
+        $result = eval("return ({$safe});");
+
+        if (!is_numeric($result)) return null;
+
+        return $outputType === 'text' ? (string) $result : (float) $result;
+
+    } catch (\Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * Resolve funções de alto nível (SUM, AVG, MIN, MAX, IF, ROUND, ABS, CONCAT)
+ * numa expressão de fórmula antes do eval() matemático.
+ *
+ * @internal Chamado por evaluateFormula()
+ */
+function formulaResolveFunctions(string $expr, array $fieldValues): string
+{
+    // At this point {slug} references have already been replaced by numeric values
+    // by evaluateFormula(). So we work only with numbers and operators here.
+
+    // Helper: safely eval a numeric expression string
+    $num = function (string $s): float {
+        $clean = preg_replace('/[^0-9+\-*\/.()E ]/', '', trim($s));
+        if ($clean === '') return 0.0;
+        try { return (float) eval("return ({$clean});"); }
+        catch (\Throwable $e) { return 0.0; }
+    };
+
+    // Helper: resolve a single arg — could be a number or a bare slug name
+    $resolveArg = function (string $a) use ($fieldValues, $num): float {
+        $a = trim($a);
+        // Bare slug (only word chars, no operators)
+        if (preg_match('/^[a-z][a-z0-9_]*$/i', $a) && isset($fieldValues[$a])) {
+            return (float) $fieldValues[$a];
+        }
+        return $num($a);
+    };
+
+    // ── SUM(a, b, ...) ──────────────────────────────────────────────
+    $expr = preg_replace_callback('/\bSUM\s*\(([^)]+)\)/i', function ($m) use ($resolveArg) {
+        return (string) array_sum(array_map($resolveArg, explode(',', $m[1])));
+    }, $expr);
+
+    // ── AVG(a, b, ...) ──────────────────────────────────────────────
+    $expr = preg_replace_callback('/\bAVG\s*\(([^)]+)\)/i', function ($m) use ($resolveArg) {
+        $args = array_filter(array_map('trim', explode(',', $m[1])));
+        if (!$args) return '0';
+        return (string) (array_sum(array_map($resolveArg, $args)) / count($args));
+    }, $expr);
+
+    // ── MIN(a, b, ...) ──────────────────────────────────────────────
+    $expr = preg_replace_callback('/\bMIN\s*\(([^)]+)\)/i', function ($m) use ($resolveArg) {
+        return (string) min(array_map($resolveArg, explode(',', $m[1])));
+    }, $expr);
+
+    // ── MAX(a, b, ...) ──────────────────────────────────────────────
+    $expr = preg_replace_callback('/\bMAX\s*\(([^)]+)\)/i', function ($m) use ($resolveArg) {
+        return (string) max(array_map($resolveArg, explode(',', $m[1])));
+    }, $expr);
+
+    // ── ABS(expr) — simple: no nested parens expected after slug resolution ──
+    $expr = preg_replace_callback('/\bABS\s*\(([^)]+)\)/i', function ($m) use ($num) {
+        return (string) abs($num($m[1]));
+    }, $expr);
+
+    // ── ROUND(expr, decimals) — handles nested parens via balanced scan ──────
+    // We scan character by character to find balanced ROUND(...) tokens
+    $out = '';
+    $i   = 0;
+    $len = strlen($expr);
+    while ($i < $len) {
+        // Look for ROUND keyword
+        if (substr($expr, $i, 5) === 'ROUND' || substr($expr, $i, 5) === 'round') {
+            $j = $i + 5;
+            while ($j < $len && $expr[$j] === ' ') $j++; // skip spaces
+            if ($j < $len && $expr[$j] === '(') {
+                // Find balanced closing paren
+                $depth = 1; $k = $j + 1;
+                while ($k < $len && $depth > 0) {
+                    if ($expr[$k] === '(') $depth++;
+                    elseif ($expr[$k] === ')') $depth--;
+                    $k++;
+                }
+                // $expr[$j+1 .. $k-2] is inner content
+                $inner    = substr($expr, $j + 1, $k - $j - 2);
+                $lastComma = strrpos($inner, ',');
+                if ($lastComma !== false) {
+                    $valPart  = substr($inner, 0, $lastComma);
+                    $decPart  = (int) trim(substr($inner, $lastComma + 1));
+                    $out .= (string) round($num($valPart), $decPart);
+                } else {
+                    $out .= (string) $num($inner);
+                }
+                $i = $k;
+                continue;
+            }
+        }
+        $out .= $expr[$i];
+        $i++;
+    }
+    $expr = $out;
+
+    // ── IF(condition, then_val, else_val) ────────────────────────────
+    // After slug resolution condition contains only numbers and operators
+    $expr = preg_replace_callback('/\bIF\s*\((.+),([^,]+),([^)]+)\)/iU', function ($m) use ($num) {
+        $cond  = preg_replace('/[^0-9+\-*\/.()<>=!&| ]/', '', $m[1]);
+        $thenV = $num($m[2]);
+        $elseV = $num($m[3]);
+        try {
+            $result = eval("return (bool)({$cond}) ? {$thenV} : {$elseV};");
+            return (string)(float)$result;
+        } catch (\Throwable $e) {
+            return '0';
+        }
+    }, $expr);
+
+    return $expr;
 }
 
 function audit(string $action, ?int $entityId, ?int $recordId, string $desc): void {

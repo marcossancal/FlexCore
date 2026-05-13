@@ -112,6 +112,7 @@ private function buildDiff(array $before, array $after, array $fields): array
         $errors = [];
         foreach ($fields as $f) {
             if (!$f['required']) continue;
+            if ($f['field_type'] === 'formula') continue; // computed, never user-supplied
             $val = $input['field_' . $f['id']] ?? null;
             if ($val === null || $val === '' || $val === []) {
                 $errors[] = "Campo \"{$f['name']}\" é obrigatório.";
@@ -124,7 +125,10 @@ private function buildDiff(array $before, array $after, array $fields): array
 
     private function saveValues(int $recordId, array $fields, array $input): void
     {
+        // First pass: save all non-formula fields
         foreach ($fields as $f) {
+            if ($f['field_type'] === 'formula') continue; // resolved in second pass
+
             $key = 'field_' . $f['id'];
             $raw = $input[$key] ?? null;
 
@@ -198,6 +202,40 @@ private function buildDiff(array $before, array $after, array $fields): array
             }
 
             $this->records->saveValue($recordId, $f, $raw);
+        }
+
+        // Second pass: resolve formula fields using current stored values
+        $this->resolveFormulas($recordId, $fields);
+    }
+
+    /**
+     * Calcula e persiste todos os campos do tipo 'formula' para um registro.
+     * Usa os valores já salvos dos outros campos como contexto.
+     */
+    private function resolveFormulas(int $recordId, array $fields): void
+    {
+        $formulaFields = array_filter($fields, fn($f) => $f['field_type'] === 'formula');
+        if (empty($formulaFields)) return;
+
+        // Build slug → value map from already-saved values
+        $storedValues  = $this->records->loadValues($recordId);
+        $fieldById     = array_column($fields, null, 'id');
+        $slugValueMap  = [];
+        foreach ($storedValues as $fieldId => $val) {
+            if (isset($fieldById[$fieldId])) {
+                $slugValueMap[$fieldById[$fieldId]['slug']] = $val;
+            }
+        }
+
+        foreach ($formulaFields as $f) {
+            $meta       = !empty($f['options_json']) ? (json_decode($f['options_json'], true) ?? []) : [];
+            $expression = trim($meta['expression'] ?? '');
+            $outputType = $meta['output'] ?? 'number';
+
+            if ($expression === '') continue;
+
+            $result = evaluateFormula($expression, $slugValueMap, $outputType);
+            $this->records->saveValue($recordId, $f, $result);
         }
     }
 

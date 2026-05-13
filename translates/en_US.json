@@ -186,7 +186,8 @@
       "json": "JSON / free object",
       "ip": "IP / hostname",
       "image": "Image",
-      "file": "File"
+      "file": "File",
+      "formula": "Formula (computed field)"
     }
   },
   "records": {

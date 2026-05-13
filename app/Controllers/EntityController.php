@@ -283,8 +283,25 @@ class EntityController
 
     private function buildOptionsJson(string $fieldType): ?string
     {
-        if (!in_array($fieldType, ['select', 'multiselect'])) return null;
-        $lines = array_filter(array_map('trim', explode("\n", post('options', ''))));
-        return json_encode(array_values($lines));
+        if (in_array($fieldType, ['select', 'multiselect'])) {
+            $lines = array_filter(array_map('trim', explode("\n", post('options', ''))));
+            return json_encode(array_values($lines));
+        }
+
+        if ($fieldType === 'formula') {
+            return json_encode([
+                'expression' => trim(post('formula_expression', '')),
+                'output'     => in_array(post('formula_output', 'number'), ['number', 'currency', 'percent', 'text'])
+                                    ? post('formula_output', 'number')
+                                    : 'number',
+            ]);
+        }
+
+        if (in_array($fieldType, ['image', 'file'])) {
+            $maxMb = max(1, min(15, (int) post('max_size_mb', 5)));
+            return json_encode(['max_size_mb' => $maxMb]);
+        }
+
+        return null;
     }
 }
