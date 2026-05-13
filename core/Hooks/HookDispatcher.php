@@ -3,30 +3,31 @@
 namespace FlexCore\Core\Hooks;
 
 /**
- * HookDispatcher — sistema de eventos do FlexCore.
+ * HookDispatcher — FlexCore event system.
  * Compatible: PHP 7.4+
  *
- * Suporta dois modos de uso:
+ * Supports two usage modes:
  *
- *   1. Estático (legado, compatível com plugins existentes):
+ *   1. Static (legacy, compatible with existing plugins):
  *      Hooks::on('record.created', $fn);
  *      Hooks::fire('record.created', [$id]);
  *
- *   2. Instância (injetável, testável):
+ *   2. Instance-based (injectable, testable):
  *      $hooks = new HookDispatcher();
  *      $hooks->on('record.created', $fn);
  *      $hooks->fire('record.created', [$id]);
  *
- * O modo instância usa seu próprio estado interno isolado — ideal
- * para testes unitários (sem contaminação entre casos de teste).
- * O modo estático mantém estado global compartilhado (comportamento original).
+ * Instance mode uses its own isolated internal state — ideal
+ * for unit testing (without contamination between test cases).
+ * Static mode keeps a shared global state (original behavior).
  *
- * Actions  → fire and forget (vários listeners, sem retorno)
- * Filters  → transforma um valor (cada listener recebe e retorna)
+ * Actions  → fire and forget (multiple listeners, no return value)
+ * Filters  → transforms a value (each listener receives and returns it)
  */
+
 class HookDispatcher
 {
-    // ── Estado estático (modo legado / global) ─────────────────────
+    // ── static state (legacy mode / global) ─────────────────────
 
     /** @var array<string, array<int, callable[]>> */
     private static array $staticActions = [];
@@ -34,7 +35,7 @@ class HookDispatcher
     /** @var array<string, array<int, callable[]>> */
     private static array $staticFilters = [];
 
-    // ── Estado de instância (modo injetável) ───────────────────────
+    // ── Instance state (injectable mode) ───────────────────────
 
     /** @var array<string, array<int, callable[]>> */
     private array $actions = [];
@@ -45,9 +46,9 @@ class HookDispatcher
     // ── Actions ───────────────────────────────────────────────────────
 
     /**
-     * Registra um listener para um evento (action).
-     * Quando chamado estaticamente opera no estado global;
-     * quando chamado em instância opera no estado local.
+     * Register a listener to an evento (action).
+     * When called statically, it runs in global state;
+     * When called in a instance, it runs in local state.
      */
     public function on(string $event, callable $listener, int $priority = 10): void
     {
@@ -117,7 +118,7 @@ class HookDispatcher
         return $value;
     }
 
-    // ── Inspeção ──────────────────────────────────────────────────────
+    // ── Inspection ──────────────────────────────────────────────────────
 
     public function hasListeners(string $event): bool
     {
@@ -129,14 +130,14 @@ class HookDispatcher
         return !empty(self::$staticActions[$event]) || !empty(self::$staticFilters[$event]);
     }
 
-    /** Limpa estado da instância (uso em testes). */
+    /** Clean instance state (used in tests) */
     public function reset(): void
     {
         $this->actions = [];
         $this->filters = [];
     }
 
-    /** Limpa estado estático global (uso em testes de integração). */
+    /** Clean global static state (used in integrations tests). */
     public static function resetStatic(): void
     {
         self::$staticActions = [];

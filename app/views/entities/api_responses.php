@@ -1,8 +1,8 @@
 <?php
-// Carrega respostas salvas
+// Load saved responses
 $savedResponses = json_decode($entity['api_responses'] ?? '{}', true) ?: [];
 
-// Operações disponíveis
+// Avaliable operations
 $operations = [
     'select_all' => [
         'label'   => 'GET — Listar todos',
@@ -90,7 +90,7 @@ $operations = [
     ],
 ];
 
-// Cores por método
+// Method colors
 $methodColors = [
     'GET'    => ['bg' => 'rgba(34,197,94,.15)',  'color' => '#86efac'],
     'POST'   => ['bg' => 'rgba(0,212,255,.12)',  'color' => 'var(--ac)'],
@@ -99,7 +99,7 @@ $methodColors = [
     '*'      => ['bg' => 'rgba(100,116,139,.15)','color' => '#94a3b8'],
 ];
 
-// Cores por código HTTP
+// HTTP code colors
 function codeColor(int $code): string {
     return match(true) {
         $code >= 200 && $code < 300 => '#86efac',

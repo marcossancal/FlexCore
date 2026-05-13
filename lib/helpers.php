@@ -102,13 +102,13 @@ function money(float $v): string {
 }
 
 /**
- * Todos os tipos de campo suportados pelo FlexCore.
- * Mapeados para: coluna de storage, ícone e label.
+ * All fieldtypes supported by FlexCore
+ * Organized by : storage column, ícon and label.
  *
  * storage:
- *   val_text  — string, JSON ou base64
- *   val_num   — DECIMAL(18,4) para número/moeda/percentual/rating/duração/progresso
- *   val_date  — DATETIME para data/datetime/hora
+ *   val_text  — string, JSON or base64
+ *   val_num   — DECIMAL(18,4): number/currency/percentage/rating/time/progress
+ *   val_date  — DATETIME: date/datetime/hour
  */
 function allFieldTypes(): array
 {
@@ -153,8 +153,8 @@ function allFieldTypes(): array
         'ip'          => ['icon' => '📡', 'storage' => 'val_text'],
 
         // ── Mídia e arquivos ─────────────────────────────────────────
-        'image'       => ['icon' => '🖼',  'storage' => 'val_text'],  // base64 em val_text (MEDIUMTEXT ~16MB)
-        'file'        => ['icon' => '📎', 'storage' => 'val_text'],   // base64 em val_text
+        'image'       => ['icon' => '🖼',  'storage' => 'val_text'],  // base64 val_text (MEDIUMTEXT ~16MB)
+        'file'        => ['icon' => '📎', 'storage' => 'val_text'],   // base64 val_text
     ];
 }
 
@@ -165,13 +165,13 @@ function fieldTypeIcon(string $t): string
 
 function fieldTypeLabel(string $t): string
 {
-    // Tenta tradução; fallback para o slug do tipo
+    // Tries to translate; fallback to slug type
     $label = __('fields.types.' . $t);
     return ($label === 'fields.types.' . $t) ? $t : $label;
 }
 
 /**
- * Tipos que usam val_num como coluna principal de storage.
+ * Types that uses val_num as main storage column.
  */
 function isNumericType(string $t): bool
 {
@@ -179,7 +179,7 @@ function isNumericType(string $t): bool
 }
 
 /**
- * Tipos que usam val_date como coluna principal de storage.
+ * Types that uses val_date as main storage column
  */
 function isDateType(string $t): bool
 {
@@ -187,15 +187,15 @@ function isDateType(string $t): bool
 }
 
 /**
- * Renderiza o valor de um campo para exibição na UI.
- */
+ * Renders the value of a field to UI exibition 
+*/
 function renderFieldValue(array $field, mixed $val, bool $full = false): string
 {
     if ($val === null || $val === '') return '<span style="color:var(--mt)">—</span>';
 
     $t = $field['field_type'];
 
-    // ── Tipos simples ────────────────────────────────────────────────
+    // ── Simple types ────────────────────────────────────────────────
     if ($t === 'checkbox')    return $val ? '✅ Sim' : '❌ Não';
     if ($t === 'currency')    return 'R$ '.number_format((float)$val, 2, ',', '.');
     if ($t === 'percent')     return number_format((float)$val, 2, ',', '.').'%';
@@ -207,13 +207,13 @@ function renderFieldValue(array $field, mixed $val, bool $full = false): string
     if ($t === 'url')         return '<a href="'.h($val).'" target="_blank" style="color:var(--ac)">'.h(parse_url($val, PHP_URL_HOST) ?: $val).'</a>';
     if ($t === 'relation')    return '<span class="badge bc">#'.h($val).'</span>';
 
-    // ── Rating (estrelas) ────────────────────────────────────────────
+    // ── Rating (stars) ────────────────────────────────────────────
     if ($t === 'rating') {
         $n = (int)$val;
         return str_repeat('⭐', $n) . str_repeat('☆', max(0, 5 - $n));
     }
 
-    // ── Progress (barra) ────────────────────────────────────────────
+    // ── Progress (bar) ────────────────────────────────────────────
     if ($t === 'progress') {
         $pct = min(100, max(0, (int)$val));
         return '<div style="display:flex;align-items:center;gap:6px">
@@ -224,7 +224,7 @@ function renderFieldValue(array $field, mixed $val, bool $full = false): string
                 </div>';
     }
 
-    // ── Duration (segundos → legível) ────────────────────────────────
+    // ── Duration (seconds → legible) ────────────────────────────────
     if ($t === 'duration') {
         $sec = (int)$val;
         $h   = intdiv($sec, 3600);
@@ -281,7 +281,7 @@ function renderFieldValue(array $field, mixed $val, bool $full = false): string
         return '<pre style="background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:10px;font-size:.78rem;overflow:auto;max-height:300px">'.h($pretty ?: $val).'</pre>';
     }
 
-    // ── Password (mascarado) ─────────────────────────────────────────
+    // ── Password (masked) ─────────────────────────────────────────
     if ($t === 'password') {
         return '<span style="letter-spacing:.1em;color:var(--mt)">••••••••</span>';
     }
@@ -292,7 +292,7 @@ function renderFieldValue(array $field, mixed $val, bool $full = false): string
         return $user ? '<span class="badge bc">'.h($user['name']).'</span>' : '<span class="badge bm">#'.h($val).'</span>';
     }
 
-    // ── Imagem (base64) ──────────────────────────────────────────────
+    // ── Image (base64) ──────────────────────────────────────────────
     if ($t === 'image') {
         if (!str_starts_with($val, 'data:image/')) return h(mb_substr($val,0,40)).'…';
         if (!$full) {
@@ -301,7 +301,7 @@ function renderFieldValue(array $field, mixed $val, bool $full = false): string
         return '<img src="'.h($val).'" style="max-width:100%;max-height:400px;border-radius:6px;object-fit:contain" loading="lazy">';
     }
 
-    // ── Arquivo (base64) ────────────────────────────────────────────
+    // ── File (base64) ────────────────────────────────────────────
     if ($t === 'file') {
         if (!str_starts_with($val, 'data:')) return h(mb_substr($val,0,60));
         // Extrai nome do options_json se disponível — fallback genérico

@@ -19,7 +19,7 @@ class Router
         $this->basePath = $basePath;
     }
 
-    // ── Registro de rotas ─────────────────────────────────────────────
+    // ── Routes register ─────────────────────────────────────────────
 
     /** @param callable|array $handler */
     public function get(string $pattern, $handler): Route

@@ -3,11 +3,10 @@
 declare(strict_types=1);
 
 /**
- * routes.php — Mapa central de rotas do FlexCore.
+ * routes.php — Central FlexCore route map.
  *
- * Rotas de plugins opcionais NÃO ficam mais aqui com DB::one inline.
- * Cada plugin registra suas próprias rotas via hook 'router.register'
- * no método boot() do Plugin.php — veja docs/plugins.md.
+ * Each plugin registers its own routes via the 'router.register' hook
+ * inside the boot() method of Plugin.php — see docs/plugins.md.
  */
 
 use FlexCore\App\Controllers\AuthController;
@@ -46,7 +45,7 @@ $router->post('/entities/{id}/fields/create',           [EntityController::class
 $router->post('/entities/{id}/fields/{fid}/update',     [EntityController::class, 'updateField']);
 $router->post('/entities/{id}/fields/{fid}/delete',     [EntityController::class, 'destroyField']);
 
-// ── Records (entidades dinâmicas) /e/{slug} ───────────────────────────
+// ── Records (dinamics entities) /e/{slug} ───────────────────────────
 $router->get( '/e/{slug}',             [RecordController::class, 'index']);
 $router->get( '/e/{slug}/new',         [RecordController::class, 'create']);
 $router->post('/e/{slug}/create',      [RecordController::class, 'store']);
@@ -63,7 +62,7 @@ $router->post('/users/create',           [SettingsController::class, 'createUser
 $router->post('/users/{id}/update',      [SettingsController::class, 'updateUser']);
 $router->post('/users/{id}/delete',      [SettingsController::class, 'destroyUser']);
 
-// ── API Keys (interface web) ──────────────────────────────────────────
+// ── API Keys (web interface) ──────────────────────────────────────────
 $router->get( '/api',                    [ApiKeyController::class, 'index']);
 $router->post('/api/keys/create',        [ApiKeyController::class, 'store']);
 $router->post('/api/keys/{id}/update',   [ApiKeyController::class, 'update']);
@@ -105,9 +104,9 @@ $router->put(   '/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'updat
 $router->delete('/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'destroy'])
        ->middleware(new ApiAuthMiddleware());
 
-// ── Rotas de plugins ativos ───────────────────────────────────────────
-// Plugins registram suas rotas via hook 'router.register' no boot().
-// Exemplo no Plugin.php do plugin:
+// ── Active plugin routes ──────────────────────────────────────────────
+// Plugins register their routes through the 'router.register' hook in boot().
+// Example inside the plugin's Plugin.php:
 //
 //   public function boot(): void
 //   {
@@ -117,5 +116,5 @@ $router->delete('/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'destr
 //       });
 //   }
 //
-// O hook é disparado abaixo — sem DB::one inline neste arquivo.
+// The hook is triggered below — without inline DB::one calls in this file.
 \FlexCore\Core\Hooks\Hooks::fire('router.register', [$router]);

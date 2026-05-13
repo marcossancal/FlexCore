@@ -3,7 +3,7 @@
 namespace FlexCore\Modules\Plugins;
 
 /**
- * PluginLoader — descobre e inicializa plugins.
+ * PluginLoader — find e initialize plugins.
  * Compatible: PHP 7.4+
  */
 class PluginLoader

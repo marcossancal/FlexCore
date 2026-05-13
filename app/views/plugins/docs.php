@@ -129,18 +129,18 @@ class Plugin
 
     public function boot(): void
     {
-        // Chamado uma vez na inicialização.
-        // Registre seus hooks aqui.
+        // Called once at initialization.
+        // Register your hooks here.
 
         Hooks::on('record.created', function (int $recordId, int $entityId, array $input) {
-            // sua lógica
+            // Your logic
         });
     }
 
     public function uninstall(): void
     {
-        // Chamado ao clicar em "Remover" no painel.
-        // Limpe tabelas e dados criados pelo plugin.
+        // Called at "Remove" button at panel.
+        // Clean tables and data created by plugin.
         // DB::execute('DROP TABLE IF EXISTS meu_plugin_logs');
     }
 

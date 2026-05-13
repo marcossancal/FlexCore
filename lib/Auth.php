@@ -3,11 +3,11 @@
 namespace FlexCore\Lib;
 
 /**
- * Auth — gerenciamento de sessão e autenticação.
- * Compatible: PHP 7.4+
+ * Auth — session and authentication management.
+ * Compatible with PHP 7.4+
  *
- * Registrado no Container como singleton em config/container.php.
- * Alias global \Auth mantido em bootstrap.php para compatibilidade.
+ * Registered in the Container as a singleton in config/container.php.
+ * Global alias \Auth preserved in bootstrap.php for compatibility.
  */
 class Auth
 {

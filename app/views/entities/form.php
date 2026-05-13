@@ -176,12 +176,12 @@ function usarEmojiCustom() {
 <?php endif; ?>
 
 <?php if ($isEdit && ($_GET['tab']??'geral')==='permissoes'):
-  // Carrega permissões salvas indexadas por papel
+  // Loads saved permissions indexed by roles
   $permsRows = DB::q('SELECT * FROM entity_permissions WHERE entity_id = ?', [$entity['id']]);
   $perms = [];
   foreach ($permsRows as $p) { $perms[$p['role']] = $p; }
 
-  // Defaults quando não há linha salva: admin e editor podem tudo, viewer só lê
+  // Defaults when there is no saved lines: admin and editor can do anythin, viewer only reads
   $defaults = [
     'admin'  => ['can_create' => 1, 'can_edit' => 1, 'can_delete' => 1],
     'editor' => ['can_create' => 1, 'can_edit' => 1, 'can_delete' => 0],

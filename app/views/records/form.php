@@ -97,7 +97,7 @@ partial('layout/header', [
 
           <?php
           // ─────────────────────────────────────────────────────────────
-          // SWITCH principal de renderização por tipo de campo
+          // Main SWITCH renderization by field type
           // ─────────────────────────────────────────────────────────────
           switch ($t):
 
@@ -135,12 +135,12 @@ partial('layout/header', [
               <input type="hidden" name="<?= h($name) ?>" id="rthidden-<?= $f['id'] ?>" value="<?= h($currentVal ?? '') ?>">
               <?php break;
 
-            // ── Número ───────────────────────────────────────────────
+            // ── Number ───────────────────────────────────────────────
             case 'number': ?>
               <input type="number" name="<?= h($name) ?>" value="<?= h($currentVal ?? '') ?>" step="any" <?= $required ?>>
               <?php break;
 
-            // ── Moeda ────────────────────────────────────────────────
+            // ── Currency ────────────────────────────────────────────────
             case 'currency': ?>
               <div style="position:relative">
                 <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mt);font-size:.85rem">R$</span>
@@ -148,7 +148,7 @@ partial('layout/header', [
               </div>
               <?php break;
 
-            // ── Percentual ───────────────────────────────────────────
+            // ── Percentage ───────────────────────────────────────────
             case 'percent': ?>
               <div style="position:relative">
                 <input type="number" name="<?= h($name) ?>" value="<?= h($currentVal ?? '') ?>" step="0.01" min="0" max="100" style="padding-right:32px" <?= $required ?>>
@@ -156,7 +156,7 @@ partial('layout/header', [
               </div>
               <?php break;
 
-            // ── Rating (estrelas 1–5) ─────────────────────────────────
+            // ── Rating (stars 1–5) ─────────────────────────────────
             case 'rating': ?>
               <div class="star-row" id="stars-<?= $f['id'] ?>">
                 <?php for ($star = 5; $star >= 1; $star--): ?>
@@ -196,22 +196,22 @@ partial('layout/header', [
                      value="<?= h($currentVal ?? '0') ?>">
               <?php break;
 
-            // ── Data ──────────────────────────────────────────────────
+            // ── Date ──────────────────────────────────────────────────
             case 'date': ?>
               <input type="date" name="<?= h($name) ?>" value="<?= h($currentVal ? date('Y-m-d', strtotime($currentVal)) : '') ?>" <?= $required ?>>
               <?php break;
 
-            // ── Data e hora ───────────────────────────────────────────
+            // ── Date time ───────────────────────────────────────────
             case 'datetime': ?>
               <input type="datetime-local" name="<?= h($name) ?>" value="<?= h($currentVal ? date('Y-m-d\TH:i', strtotime($currentVal)) : '') ?>" <?= $required ?>>
               <?php break;
 
-            // ── Hora ──────────────────────────────────────────────────
+            // ── Hour ──────────────────────────────────────────────────
             case 'time': ?>
               <input type="time" name="<?= h($name) ?>" value="<?= h($currentVal ?? '') ?>" <?= $required ?>>
               <?php break;
 
-            // ── Intervalo de datas ────────────────────────────────────
+            // ── Date range ────────────────────────────────────
             case 'daterange':
               $range  = $currentVal ? (json_decode($currentVal, true) ?: []) : [];
               $drStart = $range['start'] ?? '';
@@ -224,7 +224,7 @@ partial('layout/header', [
               </div>
               <?php break;
 
-            // ── Lista única ───────────────────────────────────────────
+            // ── Select ───────────────────────────────────────────
             case 'select':
               $opts = json_decode($f['options_json'] ?? '[]', true) ?: [];
               ?>
@@ -236,7 +236,7 @@ partial('layout/header', [
               </select>
               <?php break;
 
-            // ── Lista múltipla ────────────────────────────────────────
+            // ── Checkboxes ────────────────────────────────────────
             case 'multiselect':
               $opts     = json_decode($f['options_json'] ?? '[]', true) ?: [];
               $selected = $currentVal ? json_decode($currentVal, true) : [];
@@ -280,7 +280,7 @@ partial('layout/header', [
                      value="<?= h($currentVal ?? '[]') ?>">
               <?php break;
 
-            // ── Cor ───────────────────────────────────────────────────
+            // ── Color ───────────────────────────────────────────────────
             case 'color': ?>
               <div class="color-wrap">
                 <input type="color" id="cpicker-<?= $f['id'] ?>"
@@ -293,7 +293,7 @@ partial('layout/header', [
               </div>
               <?php break;
 
-            // ── Senha / dado sensível ─────────────────────────────────
+            // ── Password / sensitive data ─────────────────────────────────
             case 'password': ?>
               <input type="password" name="<?= h($name) ?>" value="" autocomplete="new-password"
                      placeholder="<?= $isEdit ? '(deixe em branco para manter)' : '' ?>">
@@ -319,10 +319,8 @@ partial('layout/header', [
               <div class="hint" style="color:var(--mt);font-size:.72rem;margin-top:4px">Deve ser um JSON válido</div>
               <?php break;
 
-            // ── IP / hostname ─────────────────────────────────────────
-            // já tratado em 'text' acima via $itype
 
-            // ── Imagem (base64) ───────────────────────────────────────
+            // ── Image (base64) ───────────────────────────────────────
             case 'image':
               $hasImg = $currentVal && str_starts_with($currentVal, 'data:image/');
               ?>
@@ -346,7 +344,7 @@ partial('layout/header', [
               <?php endif; ?>
               <?php break;
 
-            // ── Arquivo (base64) ──────────────────────────────────────
+            // ── File (base64) ──────────────────────────────────────
             case 'file':
               $hasFile = $currentVal && str_starts_with($currentVal, 'data:');
               // Tenta recuperar nome do arquivo do options_json
@@ -372,7 +370,7 @@ partial('layout/header', [
               <input type="hidden" name="<?= h($name) ?>_keep"      id="filekeep-<?= $f['id'] ?>" value="<?= h($currentVal ?? '') ?>">
               <?php break;
 
-            // ── Relação com outra entidade ────────────────────────────
+            // ── Relation between another entity ────────────────────────────
             case 'relation': ?>
               <?php if ($f['relation_entity_id'] && !empty($f['relation_records'])): ?>
               <select name="<?= h($name) ?>" <?= $required ?>>
@@ -386,7 +384,7 @@ partial('layout/header', [
               <?php else: ?><p style="color:var(--mt);font-size:.82rem">—</p><?php endif; ?>
               <?php break;
 
-            // ── User (usuário do sistema) ──────────────────────────────
+            // ── User (system users) ──────────────────────────────
             case 'user': ?>
               <?php
               $users = DB::q('SELECT id, name FROM users WHERE active = 1 ORDER BY name ASC');

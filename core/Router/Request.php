@@ -22,7 +22,7 @@ final class Request
     public $files;
     /** @var array */
     public $routeParams;
-    /** @var array  — usado por middleware para passar dados ao handler */
+    /** @var array  — Used by middleware to send data to handler */
     public $context = [];
 
     public function __construct(array $routeParams = [])
@@ -36,13 +36,13 @@ final class Request
         $this->routeParams = $routeParams;
     }
 
-    /** Valor de POST ou GET. */
+    /** POST or GET Values. */
     public function input(string $key, $default = null)
     {
         return $this->body[$key] ?? $this->query[$key] ?? $default;
     }
 
-    /** Parâmetro de rota (ex: {id}). */
+    /** Route parameters (ex: {id}). */
     public function param(string $key, $default = null)
     {
         return $this->routeParams[$key] ?? $default;
@@ -58,7 +58,7 @@ final class Request
         return strpos($this->server['CONTENT_TYPE'] ?? '', 'application/json') !== false;
     }
 
-    /** Parse do body JSON (requests de API). */
+    /** JSON body Parse (API requests). */
     public function json(): array
     {
         $raw = file_get_contents('php://input');
@@ -71,14 +71,14 @@ final class Request
     }
 
     /**
-     * Extrai o Bearer token do header Authorization.
+     * Extracts Bearer token from Authorization header.
      *
-     * O Apache/XAMPP em alguns modos (CGI, FastCGI) não popula
-     * HTTP_AUTHORIZATION automaticamente. Tentativas em ordem:
-     *   1. $_SERVER['HTTP_AUTHORIZATION']        — mod_php padrão
-     *   2. $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] — após RewriteRule
-     *   3. getallheaders()['Authorization']      — fallback Apache
-     *   4. apache_request_headers()              — alias do getallheaders()
+     * Apache/XAMPP in some modes (CGI, FastCGI) doesnt fill
+     * HTTP_AUTHORIZATION automatically. 'Try order':
+     *   1. $_SERVER['HTTP_AUTHORIZATION']        — default mod_php 
+     *   2. $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] — after RewriteRule
+     *   3. getallheaders()['Authorization']      — Apache fallback 
+     *   4. apache_request_headers()              — getallheaders() alias
      */
     public function bearerToken(): ?string
     {
@@ -96,15 +96,15 @@ final class Request
             return $this->server['HTTP_AUTHORIZATION'];
         }
 
-        // 2. Apache rewrite seta como REDIRECT_HTTP_AUTHORIZATION
+        // 2. Apache rewrite sets as REDIRECT_HTTP_AUTHORIZATION
         if (!empty($this->server['REDIRECT_HTTP_AUTHORIZATION'])) {
             return $this->server['REDIRECT_HTTP_AUTHORIZATION'];
         }
 
-        // 3. getallheaders() — disponível em mod_php e algumas configs CGI
+        // 3. getallheaders() — avaliable in mod_php and some CGI configs
         if (function_exists('getallheaders')) {
             $headers = getallheaders();
-            // Busca case-insensitive
+            // Search case-insensitive
             foreach ($headers as $name => $value) {
                 if (strcasecmp($name, 'Authorization') === 0) {
                     return $value;

@@ -5,7 +5,7 @@ namespace FlexCore\Modules\Automations;
 use FlexCore\Core\Hooks\Hooks;
 
 /**
- * AutomationEngine — executa automações configuradas.
+ * AutomationEngine — execute configured automations .
  * Compatible: PHP 7.4+
  */
 class AutomationEngine

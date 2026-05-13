@@ -3,7 +3,7 @@
 namespace FlexCore\Core\Router;
 
 /**
- * Route — value object imutável.
+ * Route — value object immutable.
  * Compatible: PHP 7.4+
  */
 final class Route
@@ -32,7 +32,7 @@ final class Route
         $this->compile();
     }
 
-    /** Encadeia um ou mais middlewares nesta rota. */
+    /** Chain one or more middlewares in this route. */
     public function middleware(MiddlewareInterface ...$mw): self
     {
         foreach ($mw as $m) {
@@ -73,9 +73,10 @@ final class Route
             return;
         }
 
-        // Encadeia middlewares: cada um chama $next para passar adiante.
-        // O Request carrega os parâmetros de rota e fica disponível como
-        // $request->context['api_key'] após o ApiAuthMiddleware.
+        // Chains middlewares: each one calls $next to pass it on.
+        // The Request loads the route parameters and becomes available as
+        // $request->context['api_key'] after the ApiAuthMiddleware.
+        
         $request = new Request($params);
 
         $chain = array_reduce(

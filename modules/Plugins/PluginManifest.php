@@ -3,7 +3,7 @@
 namespace FlexCore\Modules\Plugins;
 
 /**
- * PluginManifest — value object imutável.
+ * PluginManifest — value object imutable.
  * Compatible: PHP 7.4+
  */
 final class PluginManifest

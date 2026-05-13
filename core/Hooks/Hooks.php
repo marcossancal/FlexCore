@@ -3,11 +3,11 @@
 namespace FlexCore\Core\Hooks;
 
 /**
- * Hooks — alias estático de conveniência para HookDispatcher.
+ * Hooks — static convenience alias for HookDispatcher.
  *
- * Mantém a API original (Hooks::on, Hooks::fire, Hooks::applyFilter)
- * redirecionando para os métodos estáticos do HookDispatcher.
- * Plugins existentes continuam funcionando sem alteração.
+ * Preserves the original API (Hooks::on, Hooks::fire, Hooks::applyFilter)
+ * by redirecting calls to the static methods of HookDispatcher.
+ * Existing plugins continue to work without any changes.
  *
  * Compatible: PHP 7.4+
  */
@@ -37,7 +37,6 @@ class Hooks
     {
         return HookDispatcher::hasListenersStatic($event);
     }
-
     public static function reset(): void
     {
         HookDispatcher::resetStatic();

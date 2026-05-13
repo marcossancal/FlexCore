@@ -3,30 +3,29 @@
 /**
  * FlexCore — Entry point.
  *
- * Responsabilidades deste arquivo (e APENAS estas):
- *   1. Definir constantes globais (BASE, APP_VERSION)
- *   2. Carregar bootstrap (env, sessão, helpers, DB, Auth)
- *   3. Guard de instalação
- *   4. Teste de conexão DB
- *   5. Carregar idioma
- *   6. Guard de autenticação (exceto rotas públicas)
- *   7. Instanciar o Router, carregar rotas e despachar
+ * File responsabilities (ONLY this):
+ *   1. Define global contants (BASE, APP_VERSION)
+ *   2. Load bootstrap (env, session, helpers, DB, Auth)
+ *   3. Installation Guard 
+ *   4. DB connection test
+ *   5. Language loader
+ *   6. Auth Guard (except public routes)
+ *   7. Instance Router, load routes and despatch
  *
- * Para adicionar ou editar rotas: config/routes.php
- * Para adicionar lógica de negócio: app/Controllers/
+ * To add ou edit routes: config/routes.php
+ * To add business logic: app/Controllers
  */
 
 define('BASE',        __DIR__);
-define('APP_VERSION', '1.0.0');  // ← altere aqui a cada release
+define('APP_VERSION', '1.0.0');  // ← Change here every release
 
 
 
 require_once __DIR__ . '/config/bootstrap.php';
 
 // ── CORS ─────────────────────────────────────────────────────────────
-// Roda antes de qualquer lógica. header_remove() limpa o que o Apache
-// possa ter adicionado antes, garantindo que só sai o nosso valor.
-$_corsOrigin = '*'; // produção: troque por 'https://docfinder.seusite.com'
+// Before any code. header_remove() cleans anything that apache could be add before
+$_corsOrigin = '*'; // production: change by 'https://yourdomain.com'
 header_remove('Access-Control-Allow-Origin');
 header('Access-Control-Allow-Origin: '  . $_corsOrigin);
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -34,7 +33,7 @@ header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Ac
 header('Access-Control-Allow-Credentials: false');
 header('Access-Control-Max-Age: 86400');
 
-// Preflight: responde imediatamente SEM passar pelo router ou auth
+// Preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit();
@@ -42,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ─────────────────────────────────────────────────────────────────────
 
 
-// ── 1. Guard de instalação ───────────────────────────────────────────
+// ── 1. Installation Guard ───────────────────────────────────────────
 $_base      = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 $_reqUri    = strtok(rawurldecode($_SERVER['REQUEST_URI'] ?? '/'), '?');
 $_rel       = $_base !== '' && strpos($_reqUri, $_base) === 0
@@ -56,7 +55,7 @@ if ((!file_exists(__DIR__ . '/.env') || !file_exists(__DIR__ . '/.installed')) &
     exit;
 }
 
-// ── 2. Teste de conexão DB ───────────────────────────────────────────
+// ── 2. DB Connection test ───────────────────────────────────────────
 if (file_exists(__DIR__ . '/.env') && !$_onInstall) {
     try {
         DB::get();
@@ -66,7 +65,7 @@ if (file_exists(__DIR__ . '/.env') && !$_onInstall) {
     }
 }
 
-// ── 3. Carrega idioma ────────────────────────────────────────────────
+// ── 3. Language Loader (ptBR as callback) ────────────────────────────────────────────────
 if (!$_onInstall) {
     if (Auth::check()) {
         $u     = Auth::user();
@@ -77,12 +76,12 @@ if (!$_onInstall) {
     loadTranslations($_lang);
 }
 
-// ── 4. Guard de login ────────────────────────────────────────────────
-// Rotas públicas (sem autenticação) — adicione aqui se precisar de mais
+// ── 4. Login Guard  ────────────────────────────────────────────────
+// Public routes (no auth)
 $_publicRoutes = ['/login', '/logout'];
 $_currentPath  = '/' . ltrim($_rel, '/');
 
-// Rotas da API REST usam API key — não dependem de sessão
+// API Rest routes uses API Key, there is no session needing
 $_isApiRoute = strpos($_currentPath, '/api/v1/') === 0;
 
 if (!$_onInstall && !$_isApiRoute && !in_array($_currentPath, $_publicRoutes, true) && !Auth::check()) {
@@ -98,12 +97,12 @@ require_once __DIR__ . '/config/routes.php';
 $router->dispatch();
 
 // ────────────────────────────────────────────────────────────────────
-// Helpers locais (não pertencem a nenhum controller)
+// Local Helpers  (don't belong to any controller)
 // ────────────────────────────────────────────────────────────────────
 
 /**
- * Renderiza a tela de erro de conexão com o banco.
- * Separado do fluxo principal para manter o index.php limpo.
+ * Render DB connection error view
+ * Flow in anothe rfile to keep index.php clean
  */
 function renderDbError(string $message, string $base): string
 {
@@ -134,10 +133,10 @@ function renderDbError(string $message, string $base): string
     </head>
     <body>
       <div class="card">
-        <h2>⚠️ Falha na conexão com o banco</h2>
-        <p>Não foi possível conectar. Verifique o arquivo <code>.env</code>.</p>
+        <h2>⚠️ DB connection failed</h2>
+        <p>It wasn't possible to connect. Check <code>.env</code>.</p>
         <p style="font-size:.78rem;color:#4a5568">{$msg}</p>
-        <p style="margin-top:18px"><a href="{$link}">↺ Reconfigurar</a></p>
+        <p style="margin-top:18px"><a href="{$link}">↺ Reconfigure</a></p>
       </div>
     </body>
     </html>

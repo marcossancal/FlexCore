@@ -18,7 +18,7 @@ if (file_exists(BASE_BS . '/.env')) {
     }
 }
 
-// ── DEBUG — controlado por DEBUG=true no .env ────────────────────────
+// ── DEBUG — controlled by DEBUG=true at .env ────────────────────────
 if (($_ENV['DEBUG'] ?? 'false') === 'true') {
     ini_set('display_errors', '1');
     ini_set('display_startup_errors', '1');
@@ -31,15 +31,16 @@ if (($_ENV['DEBUG'] ?? 'false') === 'true') {
 
 session_start();
 
-// ── Autoloader PSR-4 ─────────────────────────────────────────────────
-// Resolve namespaces FlexCore\* para o diretório raiz do projeto.
-// Elimina a necessidade de require_once manual para cada arquivo.
-// Prefixos registrados:
+// ── PSR-4 Autoloader ──────────────────────────────────────────────────
+// Resolves FlexCore\* namespaces to the project's root directory.
+// Eliminates the need for manual require_once calls for each file.
+// Registered prefixes:
 //   FlexCore\Lib\        → lib/
 //   FlexCore\Core\       → core/
 //   FlexCore\App\        → app/
 //   FlexCore\Api\        → api/
 //   FlexCore\Modules\    → modules/
+
 spl_autoload_register(function (string $class): void {
     $map = [
         'FlexCore\\Lib\\'     => BASE_BS . '/lib/',
@@ -60,21 +61,22 @@ spl_autoload_register(function (string $class): void {
     }
 });
 
-// ── Aliases globais ───────────────────────────────────────────────────
-// DB e Auth são classes namespaced (FlexCore\Lib\DB / Auth).
-// Os aliases abaixo mantêm compatibilidade com código legado, plugins
-// e views que referenciam \DB e \Auth sem namespace.
-// Não é necessário registrá-los no autoloader — class_alias é instantâneo.
+// ── Global aliases ────────────────────────────────────────────────────
+// DB and Auth are namespaced classes (FlexCore\Lib\DB / Auth).
+// The aliases below maintain compatibility with legacy code, plugins,
+// and views that reference \DB and \Auth without namespaces.
+// There is no need to register them in the autoloader — class_alias is instantaneous.
+
 class_alias(\FlexCore\Lib\DB::class,   'DB');
 class_alias(\FlexCore\Lib\Auth::class, 'Auth');
 
-// ── Helpers (funções globais) ─────────────────────────────────────────
+// ── Helpers (globals functions) ─────────────────────────────────────────
 require_once BASE_BS . '/lib/helpers.php';
 
-// ── BASE_PATH (usado por url(), redirect(), Router) ───────────────────
+// ── BASE_PATH (used por url(), redirect(), Router) ───────────────────
 define('BASE_PATH', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'));
 
-// ── Container de DI ───────────────────────────────────────────────────
+// ── DI Container ───────────────────────────────────────────────────
 $container = require_once BASE_BS . '/config/container.php';
 
 // ── Boot: PluginLoader ───────────────────────────────────────────────

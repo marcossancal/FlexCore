@@ -40,7 +40,7 @@ partial('layout/header', [
 <?php else: ?>
 
 <?php
-// ── Helpers de URL ────────────────────────────────────────────────────
+// ── URL Helpers ────────────────────────────────────────────────────
 function buildFilterUrl(string $slug, array $rawFilters, string $q, string $sortField = '', string $sortDir = 'desc', ?string $addRaw = null, ?string $removeRaw = null): string
 {
     $filters = $rawFilters;
@@ -72,7 +72,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
 
 <div style="display:flex;gap:18px;align-items:flex-start">
 
-  <!-- ── SIDEBAR DE FILTROS ─────────────────────────────────────────── -->
+  <!-- ── FILTER SIDEBAR ─────────────────────────────────────────── -->
   <div style="width:252px;flex-shrink:0">
     <div class="card" style="padding:16px 18px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -82,7 +82,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
         <?php endif; ?>
       </div>
 
-      <!-- Busca global -->
+      <!-- Global search -->
       <form method="GET" style="margin-bottom:14px">
         <?php foreach ($rawFilters as $rf): ?><input type="hidden" name="filters[]" value="<?= h($rf) ?>"><?php endforeach; ?>
         <?php if ($sortField && $sortField!=='created_at'): ?><input type="hidden" name="sort_field" value="<?= h($sortField) ?>"><?php endif; ?>
@@ -263,7 +263,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
     <!-- ══ VIEW CARDS ═══════════════════════════════════════════════════ -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
       <?php foreach ($records as $rec):
-        // Primeiro campo visível como título, segundo como subtítulo
+        // First visible field as title, second as subtitle
         $lf = array_values($list_fields);
         $titleField = $lf[0] ?? null;
         $subField   = $lf[1] ?? null;
@@ -313,9 +313,9 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
       <div style="color:var(--mt);font-size:.85rem">O Kanban precisa de pelo menos um campo do tipo <strong>Seleção única</strong> marcado para exibição na lista.</div>
     </div>
     <?php else:
-      // Agrupa registros por valor do kanban field
+      // Group records by kanban field value
       $options  = json_decode($kanbanField['options_json'] ?? '[]', true) ?: [];
-      $options[] = ''; // coluna "Sem valor"
+      $options[] = ''; // coluna "No value"
       $grouped  = [];
       foreach ($options as $opt) { $grouped[$opt] = []; }
       foreach ($records as $rec) {
@@ -323,7 +323,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
         if (!isset($grouped[$val])) $grouped[$val] = [];
         $grouped[$val][] = $rec;
       }
-      // Campo de título (primeiro campo visível ≠ kanban field)
+      // Title field (first visible field ≠ kanban field)
       $titleField = null;
       foreach ($list_fields as $f) {
         if ($f['id'] != $kanbanField['id']) { $titleField = $f; break; }

@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 /**
- * container.php — Bindings do Container de DI do FlexCore.
+ * container.php — FlexCore DI Container bindings.
  *
- * Cada linha faz o Container saber qual classe concreta
- * instanciar quando um serviço ou controller pedir uma
- * interface (ou classe base).
+ * Each line tells the Container which concrete class
+ * should be instantiated when a service or controller
+ * requests an interface (or base class).
  *
- * Como usar em qualquer lugar do código:
+ * How to use anywhere in the codebase:
  *   $container = \FlexCore\Core\Container\Container::getInstance();
  *   $service   = $container->make(\FlexCore\App\Services\RecordService::class);
  */
@@ -53,7 +53,7 @@ $container->singleton(AutomationEngine::class, function (Container $c) {
 });
 
 // ── Plugins ───────────────────────────────────────────────────────────
-// PluginLoader é instanciado diretamente no bootstrap com APP_VERSION seguro
-// (APP_VERSION só existe após index.php — não registrar como singleton aqui)
+// PluginLoader is instantiated directly in the bootstrap with a safe APP_VERSION
+// (APP_VERSION only exists after index.php — do not register it as a singleton here)
 
 return $container;
