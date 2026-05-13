@@ -28,6 +28,164 @@ if ($isDark) {
 } else {
     $vars = "--bg:#f0f2f5;--sb-bg:#ffffff;--sb-bd:rgba(0,0,0,.07);--sf:rgba(255,255,255,.9);--sf2:rgba(255,255,255,.6);--sf3:rgba(0,0,0,.025);--bd:rgba(0,0,0,.07);--bd2:rgba(0,0,0,.11);--tx:#0d1117;--mt:#64748b;--mt2:#94a3b8;--gn:#16a34a;--gn-bg:rgba(22,163,74,.09);--rd:#dc2626;--rd-bg:rgba(220,38,38,.09);--am:#d97706;--am-bg:rgba(217,119,6,.09);--shd:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);--shd-sm:0 1px 2px rgba(0,0,0,.04);";
 }
+
+// ── SISTEMA DE NAV_ITEMS ──────────────────────────────────────────────────────
+//
+// Cada item do sidebar é um array com a estrutura:
+//
+//   [
+//     'id'       => string,          // identificador único (ex: 'home', 'psique')
+//     'section'  => string,          // label da seção (ex: 'Geral', 'Clínica')
+//     'label'    => string,          // texto do link
+//     'url'      => string,          // caminho (passado por url())
+//     'icon'     => string,          // emoji ou HTML
+//     'active'   => string|string[], // active_page(s) que marcam o link como ativo
+//     'roles'    => string[],        // [] = todos; ['admin'] = só admin; etc.
+//     'order'    => int,             // ordenação global (menor = mais acima)
+//     'visible'  => bool,            // false oculta o item sem removê-lo do array
+//   ]
+//
+// Plugins adicionam/alteram/removem itens via:
+//
+//   Hooks::filter('sidebar.nav_items', function(array $items): array {
+//       $items[] = [
+//           'id'      => 'meu-plugin',
+//           'section' => 'Minha Seção',
+//           'label'   => 'Meu Link',
+//           'url'     => '/meu-plugin',
+//           'icon'    => '🔌',
+//           'active'  => 'meu-plugin',
+//           'roles'   => [],
+//           'order'   => 50,
+//           'visible' => true,
+//       ];
+//       return $items;
+//   }, priority: 20);  // priority menor = roda antes
+//
+// Para remover um item nativo, filtre pelo 'id':
+//   $items = array_filter($items, fn($i) => $i['id'] !== 'automations');
+//
+// Para reordenar, altere o 'order' de qualquer item.
+// Para ocultar sem remover, mude 'visible' para false.
+// ─────────────────────────────────────────────────────────────────────────────
+
+$_currentRole  = Auth::user()['role'] ?? '';
+$_activePage   = $active_page  ?? '';
+$_activeEntity = $active_entity ?? '';
+
+$_navItemsNative = [
+
+    // ── Geral ─────────────────────────────────────────────────────
+    [
+        'id'      => 'home',
+        'section' => __('nav.general'),
+        'label'   => __('nav.dashboard'),
+        'url'     => '/',
+        'icon'    => '🏠',
+        'active'  => 'home',
+        'roles'   => [],
+        'order'   => 10,
+        'visible' => true,
+    ],
+
+    // ── Integrações (admin) ────────────────────────────────────────
+    [
+        'id'      => 'api-keys',
+        'section' => __('nav.integrations'),
+        'label'   => __('nav.api_keys'),
+        'url'     => '/api',
+        'icon'    => '🔑',
+        'active'  => ['api', 'api-docs'],
+        'roles'   => ['admin'],
+        'order'   => 40,
+        'visible' => true,
+    ],
+    [
+        'id'      => 'automations',
+        'section' => __('nav.integrations'),
+        'label'   => __('nav.automations'),
+        'url'     => '/automations',
+        'icon'    => '⚡',
+        'active'  => 'automations',
+        'roles'   => ['admin'],
+        'order'   => 41,
+        'visible' => true,
+    ],
+    [
+        'id'      => 'plugins',
+        'section' => __('nav.integrations'),
+        'label'   => __('nav.plugins'),
+        'url'     => '/plugins',
+        'icon'    => '🧩',
+        'active'  => 'plugins',
+        'roles'   => ['admin'],
+        'order'   => 42,
+        'visible' => true,
+    ],
+
+    // ── Admin ──────────────────────────────────────────────────────
+    [
+        'id'      => 'entities',
+        'section' => __('nav.admin'),
+        'label'   => __('nav.entities'),
+        'url'     => '/entities',
+        'icon'    => '⚙️',
+        'active'  => 'entities',
+        'roles'   => ['admin'],
+        'order'   => 60,
+        'visible' => true,
+    ],
+    [
+        'id'      => 'settings',
+        'section' => __('nav.admin'),
+        'label'   => __('nav.settings'),
+        'url'     => '/settings',
+        'icon'    => '🔧',
+        'active'  => 'settings',
+        'roles'   => ['admin'],
+        'order'   => 61,
+        'visible' => true,
+    ],
+    [
+        'id'      => 'users',
+        'section' => __('nav.admin'),
+        'label'   => __('nav.users'),
+        'url'     => '/settings?tab=usuarios',
+        'icon'    => '👥',
+        'active'  => 'users',
+        'roles'   => ['admin'],
+        'order'   => 62,
+        'visible' => true,
+    ],
+];
+
+// ── Aplica o filtro — plugins adicionam/alteram/removem aqui ─────────
+$_navItems = \FlexCore\Core\Hooks\Hooks::applyFilter('sidebar.nav_items', $_navItemsNative);
+
+// ── Ordena por 'order' ────────────────────────────────────────────────
+usort($_navItems, fn($a, $b) => ($a['order'] ?? 99) <=> ($b['order'] ?? 99));
+
+// ── Helper: checa se item está ativo ─────────────────────────────────
+$_isActive = function(array $item) use ($_activePage): bool {
+    $active = $item['active'] ?? '';
+    if (is_array($active)) return in_array($_activePage, $active);
+    return $_activePage === $active;
+};
+
+// ── Helper: checa permissão de role ──────────────────────────────────
+$_hasRole = function(array $item) use ($_currentRole): bool {
+    $roles = $item['roles'] ?? [];
+    return empty($roles) || in_array($_currentRole, $roles);
+};
+
+// ── Agrupa por seção ──────────────────────────────────────────────────
+$_sections = [];
+foreach ($_navItems as $item) {
+    if (!($item['visible'] ?? true)) continue;
+    if (!$_hasRole($item)) continue;
+    $sec = $item['section'] ?? '';
+    $_sections[$sec][] = $item;
+}
 ?><!DOCTYPE html>
 <html lang="<?= h(currentLang()) ?>" data-theme="<?= $isDark ? 'dark' : 'light' ?>">
 <head>
@@ -52,30 +210,15 @@ if ($isDark) {
     html{min-height:100%}
     body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;line-height:1.5;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-    /* ── SIDEBAR ── */
-    .sidebar{
-      width:var(--sb);min-height:100vh;
-      background:var(--sb-bg);border-right:1px solid var(--sb-bd);
-      display:flex;flex-direction:column;
-      position:fixed;top:0;left:0;z-index:200;overflow-y:auto;
-      transition:transform var(--tr);
-    }
-    .sb-logo{
-      height:var(--tbh);padding:0 16px;
-      border-bottom:1px solid var(--sb-bd);
-      display:flex;align-items:center;gap:10px;flex-shrink:0;
-    }
+    .sidebar{width:var(--sb);min-height:100vh;background:var(--sb-bg);border-right:1px solid var(--sb-bd);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:200;overflow-y:auto;transition:transform var(--tr);}
+    .sb-logo{height:var(--tbh);padding:0 16px;border-bottom:1px solid var(--sb-bd);display:flex;align-items:center;gap:10px;flex-shrink:0;}
     .sb-logo-mark{width:28px;height:28px;border-radius:8px;background:var(--ac);display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .sb-logo-mark svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round}
     .sb-logo-name{font-size:.84rem;font-weight:700;letter-spacing:-.01em;color:var(--tx)}
     .sb-logo img{max-height:28px;max-width:150px;object-fit:contain}
     .sb-section{padding:14px 8px 4px}
     .sb-label{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mt2);padding:0 9px;margin-bottom:3px}
-    .sb-link{
-      display:flex;align-items:center;gap:9px;padding:7px 9px;
-      border-radius:var(--r2);color:var(--mt);text-decoration:none;
-      font-size:.79rem;font-weight:500;transition:all var(--tr);margin-bottom:1px;cursor:pointer;
-    }
+    .sb-link{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:var(--r2);color:var(--mt);text-decoration:none;font-size:.79rem;font-weight:500;transition:all var(--tr);margin-bottom:1px;cursor:pointer;}
     .sb-link:hover{background:var(--sf3);color:var(--tx)}
     .sb-link.active{background:var(--ac-glow);color:var(--ac);font-weight:600}
     .sb-link .ico{width:16px;text-align:center;font-size:.9rem;flex-shrink:0}
@@ -87,46 +230,29 @@ if ($isDark) {
     .sb-user-name{font-size:.76rem;font-weight:600;color:var(--tx);line-height:1.2}
     .sb-user-role{font-size:.62rem;color:var(--mt2)}
 
-    /* ── OVERLAY ── */
     .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;backdrop-filter:blur(2px)}
     .sb-overlay.open{display:block}
 
-    /* ── MAIN ── */
     .main{margin-left:var(--sb);flex:1;min-height:100vh;display:flex;flex-direction:column;min-width:0}
-
-    /* ── TOPBAR — mesma cor do sidebar, unidade visual ── */
-    .topbar{
-      height:var(--tbh);
-      background:var(--sb-bg);border-bottom:1px solid var(--sb-bd);
-      display:flex;align-items:center;justify-content:space-between;
-      padding:0 22px;position:sticky;top:0;z-index:50;gap:12px;flex-shrink:0;
-    }
+    .topbar{height:var(--tbh);background:var(--sb-bg);border-bottom:1px solid var(--sb-bd);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:50;gap:12px;flex-shrink:0;}
     .topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
     .breadcrumb{font-size:.74rem;color:var(--mt2);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
     .breadcrumb a{color:var(--mt);text-decoration:none;transition:color var(--tr)}
     .breadcrumb a:hover{color:var(--tx)}
     .breadcrumb .sep{color:var(--mt2);opacity:.5}
     .topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-
-    /* ── HAMBURGER ── */
     .btn-menu{display:none;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--r2);background:transparent;border:1px solid var(--bd2);cursor:pointer;color:var(--mt);font-size:1rem;flex-shrink:0;transition:all var(--tr)}
     .btn-menu:hover{background:var(--sf3);color:var(--tx)}
 
-    /* ── CONTENT ── */
     .content{width:100%;padding:22px;flex:1;background:var(--bg);min-height:0;overflow-x:hidden}
-
-    /* ── FLASH ── */
     .flash{border-radius:var(--r2);padding:10px 14px;margin-bottom:18px;font-size:.8rem;display:flex;align-items:center;gap:9px}
     .flash-ok{background:var(--gn-bg);border:1px solid color-mix(in srgb,var(--gn) 25%,transparent);color:var(--gn)}
     .flash-err{background:var(--rd-bg);border:1px solid color-mix(in srgb,var(--rd) 25%,transparent);color:var(--rd)}
     .flash-info{background:var(--ac-glow);border:1px solid color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac)}
 
-    /* ── CARDS ── */
     .card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:20px 22px;margin-bottom:16px;box-shadow:var(--shd-sm);transition:border-color var(--tr)}
     .card:hover{border-color:var(--bd2)}
     .card-title{font-size:.78rem;font-weight:700;color:var(--tx);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--bd);letter-spacing:-.01em}
-
-    /* ── BUTTONS ── */
     .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:var(--r2);border:none;cursor:pointer;font-family:var(--font);font-size:.78rem;font-weight:600;transition:all var(--tr);text-decoration:none;white-space:nowrap;letter-spacing:-.01em}
     .btn-primary{background:var(--ac);color:var(--ac-fg)}
     .btn-primary:hover{filter:brightness(1.08);box-shadow:0 0 0 3px var(--ac-glow)}
@@ -137,7 +263,6 @@ if ($isDark) {
     .btn-sm{padding:5px 11px;font-size:.74rem}
     .btn-xs{padding:3px 8px;font-size:.68rem}
 
-    /* ── FORMS ── */
     .field{margin-bottom:14px}
     .field label{display:block;font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mt2);margin-bottom:5px}
     .field input,.field select,.field textarea{width:100%;background:var(--bg);border:1px solid var(--bd2);border-radius:var(--r2);color:var(--tx);padding:8px 11px;font-family:var(--font);font-size:.82rem;transition:all var(--tr);outline:none}
@@ -149,7 +274,6 @@ if ($isDark) {
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 
-    /* ── TABLES ── */
     .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
     table{width:100%;border-collapse:collapse;min-width:480px}
     th{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mt2);padding:9px 12px;border-bottom:1px solid var(--bd2);text-align:left;white-space:nowrap}
@@ -161,13 +285,11 @@ if ($isDark) {
     .empty-row td{text-align:center;color:var(--mt2);padding:40px;min-width:unset}
     .td-actions{display:flex;gap:5px;align-items:center}
 
-    /* ── SECTION HEAD ── */
     .sec-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
     .sec-title{font-size:1.1rem;font-weight:700;letter-spacing:-.02em;color:var(--tx)}
     .sec-sub{color:var(--mt2);font-size:.74rem;margin-top:3px}
     .sec-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 
-    /* ── BADGES ── */
     .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:.64rem;font-weight:700;letter-spacing:.03em}
     .badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
     .bg{background:var(--gn-bg);color:var(--gn)}.bg .badge-dot{background:var(--gn)}
@@ -176,7 +298,6 @@ if ($isDark) {
     .bc{background:var(--ac-glow);color:var(--ac)}
     .ba{background:var(--am-bg);color:var(--am)}.ba .badge-dot{background:var(--am)}
 
-    /* ── STATS ── */
     .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px}
     .stat{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:16px 18px;transition:all var(--tr);cursor:pointer}
     .stat:hover{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-glow)}
@@ -184,7 +305,6 @@ if ($isDark) {
     .stat-lbl{font-size:.64rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--mt2)}
     .stat-ico{font-size:1rem}
 
-    /* ── MISC ── */
     .ent-chip{display:inline-flex;align-items:center;gap:7px}
     .ent-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:.64rem;font-weight:600;background:var(--sf3);border:1px solid var(--bd2);color:var(--mt)}
@@ -195,7 +315,6 @@ if ($isDark) {
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
 
-    /* ── RESPONSIVE ── */
     @media(max-width:900px){.row3{grid-template-columns:1fr 1fr}}
     @media(max-width:768px){
       .sidebar{transform:translateX(-100%);box-shadow:4px 0 24px rgba(0,0,0,.3)}
@@ -236,18 +355,19 @@ if ($isDark) {
     <?php endif; ?>
   </div>
 
-  <div class="sb-section">
-    <div class="sb-label"><?= __('nav.general') ?></div>
-    <a href="<?= url('/') ?>" class="sb-link <?= ($active_page??'')==='home'?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">🏠</span> <?= __('nav.dashboard') ?>
-    </a>
-  </div>
+  <?php
+  // ── Seção especial: Dashboard (sempre primeiro) ───────────────────
+  // Renderiza a seção "Geral" separadamente para garantir posição fixa.
+  // Os itens de order < 20 já estão na $_sections['Geral'|nav.general].
+  ?>
 
   <?php if (!empty($entities_menu)): ?>
   <div class="sb-section">
     <div class="sb-label"><?= __('nav.entities_menu') ?></div>
     <?php foreach ($entities_menu as $em): ?>
-    <a href="<?= url('/e/' . h($em['slug'])) ?>" class="sb-link <?= ($active_entity??'')===$em['slug']?'active':'' ?>" onclick="closeSidebar()">
+    <a href="<?= url('/e/' . h($em['slug'])) ?>"
+       class="sb-link <?= $_activeEntity === $em['slug'] ? 'active' : '' ?>"
+       onclick="closeSidebar()">
       <span class="sb-ent-dot" style="background:<?= h($em['color']) ?>"></span>
       <?= h($em['name']) ?>
     </a>
@@ -255,47 +375,35 @@ if ($isDark) {
   </div>
   <?php endif; ?>
 
-  <?php if (Auth::user()['role'] === 'admin'): ?>
+  <?php
+  // ── Renderiza todas as seções dos nav_items filtrados ────────────
+  foreach ($_sections as $sectionLabel => $items):
+  ?>
   <div class="sb-section">
-    <div class="sb-label"><?= __('nav.integrations') ?></div>
-    <a href="<?= url('/api') ?>" class="sb-link <?= in_array($active_page??'',['api','api-docs'])?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">🔑</span> <?= __('nav.api_keys') ?>
+    <div class="sb-label"><?= h($sectionLabel) ?></div>
+    <?php foreach ($items as $item): ?>
+    <a href="<?= url($item['url']) ?>"
+       class="sb-link <?= $_isActive($item) ? 'active' : '' ?>"
+       onclick="closeSidebar()">
+      <span class="ico"><?= $item['icon'] ?></span>
+      <?= h($item['label']) ?>
+      <?php if (!empty($item['badge'])): ?>
+        <span class="sb-pill"><?= h($item['badge']) ?></span>
+      <?php endif; ?>
     </a>
-    <a href="<?= url('/automations') ?>" class="sb-link <?= ($active_page??'')==='automations'?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">⚡</span> <?= __('nav.automations') ?>
-    </a>
-    <a href="<?= url('/plugins') ?>" class="sb-link <?= ($active_page??'')==='plugins'?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">🧩</span> <?= __('nav.plugins') ?>
-    </a>
-    <?php if (DB::one("SELECT id FROM plugins WHERE plugin_id = 'flexcore-data-importer' AND active = 1")): ?>
-    <a href="<?= url('/importer') ?>" class="sb-link <?= ($active_page??'')==='importer'?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">📥</span> Data Importer
-    </a>
-    <?php endif; ?>
+    <?php endforeach; ?>
   </div>
-  <div class="sb-section">
-    <div class="sb-label"><?= __('nav.admin') ?></div>
-    <a href="<?= url('/entities') ?>" class="sb-link <?= ($active_page??'')==='entities'?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">⚙️</span> <?= __('nav.entities') ?>
-    </a>
-    <a href="<?= url('/settings') ?>" class="sb-link <?= ($active_page??'')==='settings'?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">🔧</span> <?= __('nav.settings') ?>
-    </a>
-    <a href="<?= url('/settings?tab=usuarios') ?>" class="sb-link <?= ($active_page??'')==='users'?'active':'' ?>" onclick="closeSidebar()">
-      <span class="ico">👥</span> <?= __('nav.users') ?>
-    </a>
-  </div>
-  <?php endif; ?>
+  <?php endforeach; ?>
 
   <div class="sb-bottom">
     <div class="sb-user">
-      <div class="sb-avatar"><?= mb_strtoupper(mb_substr(Auth::user()['name']??'?', 0, 1)) ?></div>
+      <div class="sb-avatar"><?= mb_strtoupper(mb_substr(Auth::user()['name'] ?? '?', 0, 1)) ?></div>
       <div>
-        <div class="sb-user-name"><?= h(explode(' ', Auth::user()['name']??'')[0]) ?></div>
-        <div class="sb-user-role"><?= h(Auth::user()['role']??'') ?></div>
+        <div class="sb-user-name"><?= h(explode(' ', Auth::user()['name'] ?? '')[0]) ?></div>
+        <div class="sb-user-role"><?= h(Auth::user()['role'] ?? '') ?></div>
       </div>
     </div>
-    <a href="<?= url('logout'); ?>" class="sb-link" style="margin-top:4px">
+    <a href="<?= url('logout') ?>" class="sb-link" style="margin-top:4px">
       <span class="ico">🚪</span> <?= __('nav.logout') ?>
     </a>
   </div>
@@ -333,5 +441,5 @@ if ($isDark) {
 <script>
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('open')}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open')}
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSidebar()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSidebar();});
 </script>

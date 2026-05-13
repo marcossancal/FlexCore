@@ -152,7 +152,7 @@ class PluginController
                 new \RecursiveDirectoryIterator($dest, \FilesystemIterator::SKIP_DOTS),
                 \RecursiveIteratorIterator::CHILD_FIRST
             );
-            foreach ($it as $f) { $f->isDir() ? rmdir($f) : unlink($f); }
+            foreach ($it as $f) { $f->isDir() ? rmdir($f->getPathname()) : unlink($f->getPathname()); }
             rmdir($dest);
         }
 
