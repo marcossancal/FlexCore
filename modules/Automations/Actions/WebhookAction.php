@@ -22,29 +22,36 @@ use FlexCore\Modules\Automations\ActionHandlerInterface;
 class WebhookAction implements ActionHandlerInterface
 {
     public function execute(array $config, int $recordId, int $entityId, array $input): void
-    {
-        $url    = $config['url']    ?? '';
-        $method = strtoupper($config['method'] ?? 'POST');
+{
+    $url    = $config['url'] ?? '';
+    $secret = $config['secret'] ?? '';
+    $method = strtoupper($config['method'] ?? 'POST');
 
-        if (empty($url)) {
-            throw new \InvalidArgumentException('Webhook URL não configurada.');
-        }
-
-        $payload = json_encode([
-            'event'      => 'record.' . ($config['_event'] ?? 'changed'),
-            'record_id'  => $recordId,
-            'entity_id'  => $entityId,
-            'data'       => $input,
-            'fired_at'   => date('c'),
-        ]);
-
-        $headers = array_merge([
-            'Content-Type'   => 'application/json',
-            'X-FlexCore-Key' => hash('sha256', $url . $recordId),
-        ], $config['headers'] ?? []);
-
-        $this->sendWithRetry($url, $method, $payload, $headers);
+    if (empty($url)) {
+        throw new \InvalidArgumentException('Webhook URL não configurada.');
     }
+
+    $payload = json_encode([
+        'event'     => 'record.' . ($config['_event'] ?? 'changed'),
+        'record_id' => $recordId,
+        'entity_id' => $entityId,
+        'data'      => $input,
+        'fired_at'  => date('c'),
+    ]);
+
+    $headers = array_merge([
+        'Content-Type'      => 'application/json',
+        'X-FlexCore-Event'  => 'record.webhook',
+        'X-FlexCore-Delivery' => uniqid('', true),
+    ], $config['headers'] ?? []);
+
+    // HMAC — só adiciona se tiver secret configurado
+    if ($secret !== '') {
+        $headers['X-FlexCore-Signature'] = 'sha256=' . hash_hmac('sha256', $payload, $secret);
+    }
+
+    $this->sendWithRetry($url, $method, $payload, $headers);
+}
 
     public function label(): string
     {

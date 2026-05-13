@@ -140,7 +140,11 @@ foreach ($entities as $e) {
 const BO = document.getElementById('builder-overlay');
 const ACTION_TPLS = {
   webhook:`<div class="field"><label>URL *</label><input type="url" name="action_config[url]" placeholder="https://..." required></div>
-    <div class="field"><label>HTTP</label><select name="action_config[method]"><option>POST</option><option>PUT</option><option>PATCH</option></select></div>`,
+    <div class="field"><label>Método HTTP</label><select name="action_config[method]"><option>POST</option><option>PUT</option><option>PATCH</option></select></div>
+    <div class="field"><label>Segredo HMAC <span style="color:var(--mt);font-size:.8rem;font-weight:400">(opcional)</span></label>
+      <input type="password" name="action_config[secret]" placeholder="Deixe vazio para não assinar" autocomplete="new-password">
+      <div style="font-size:.75rem;color:var(--mt);margin-top:4px">Envia o header <code>X-FlexCore-Signature</code> — mesmo padrão do GitHub Webhooks.</div>
+    </div>`,
   set_field:`<div class="row2">
     <div class="field"><label><?= __('fields.name') ?> *</label><select name="action_config[field_id]">
       <?= $fieldOptions ?>
@@ -172,6 +176,14 @@ function openEdit(a) {
   document.getElementById('b-event').value = a.trigger_event;
   document.getElementById('b-action').value = a.action_type;
   renderActionCfg(a.action_type);
+  const cfg = typeof a.action_config === 'string' ? JSON.parse(a.action_config||'{}') : (a.action_config||{});
+  if (a.action_type === 'webhook') {
+    const urlEl    = document.querySelector('[name="action_config[url]"]');
+    const methodEl = document.querySelector('[name="action_config[method]"]');
+    if (urlEl)    urlEl.value    = cfg.url    || '';
+    if (methodEl) methodEl.value = cfg.method || 'POST';
+    // secret não é populado intencionalmente — usuário redigita se quiser alterar
+  }
   BO.style.display = 'flex';
 }
 function closeBuilder() { BO.style.display = 'none'; }

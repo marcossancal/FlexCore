@@ -53,21 +53,44 @@ class RecordService
     }
 
     public function update(int $recordId, int $entityId, array $rawInput): void
-    {
-        $this->records->touch($recordId);
+{
+    // Captura valores ANTES
+    $before = $this->records->loadValues($recordId);
 
-        $fields = $this->fields->forEntity($entityId);
+    $this->records->touch($recordId);
+    $fields = $this->fields->forEntity($entityId);
 
-        Hooks::fire('record.before_update', [$recordId, $entityId, $rawInput]);
+    Hooks::fire('record.before_update', [$recordId, $entityId, $rawInput]);
 
-        $this->saveValues($recordId, $fields, $rawInput);
+    $this->saveValues($recordId, $fields, $rawInput);
 
-        $this->audit->log('update_record', $entityId, $recordId,
-            "Registro #{$recordId} atualizado"
-        );
+    // Captura valores DEPOIS e calcula diff
+    $after = $this->records->loadValues($recordId);
+    $diff  = $this->buildDiff($before, $after, $fields);
 
-        Hooks::fire('record.updated', [$recordId, $entityId, $rawInput]);
+    $this->audit->log('update_record', $entityId, $recordId,
+        "Registro #{$recordId} atualizado",
+        $diff  // passar o diff para o audit
+    );
+
+    Hooks::fire('record.updated', [$recordId, $entityId, $rawInput]);
+}
+
+private function buildDiff(array $before, array $after, array $fields): array
+{
+    $fieldMap = array_column($fields, null, 'id');
+    $diff = [];
+
+    foreach ($after as $fieldId => $newVal) {
+        $oldVal = $before[$fieldId] ?? null;
+        if ($oldVal === $newVal) continue;
+
+        $name = $fieldMap[$fieldId]['name'] ?? "field_{$fieldId}";
+        $diff[] = ['field' => $name, 'from' => $oldVal, 'to' => $newVal];
     }
+
+    return $diff;
+}
 
     public function delete(int $recordId, int $entityId): void
     {
