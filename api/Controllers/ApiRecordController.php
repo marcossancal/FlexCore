@@ -308,43 +308,59 @@ class ApiRecordController
      *
      * @return array{0: string, 1: array}  [$whereClause, $params]
      */
-    private function buildFilterWhere(array $fields, int $entityId): array
+// Suporte a: ?valor__gt=100, ?nome__contains=silva, ?status__in=ativo,pendente
+private function parseFilterParam(string $key, string $val, array $slugMap): ?array
+{
+    $op = 'eq';
+    $slug = $key;
+
+    if (str_contains($key, '__')) {
+        [$slug, $op] = explode('__', $key, 2);
+    }
+
+    if (!isset($slugMap[$slug])) return null;
+
+    return ['field' => $slugMap[$slug], 'op' => $op, 'val' => $val];
+}
+
+private function valColumn(string $fieldType): string
+{
+    if (isNumericType($fieldType)) return 'val_num';
+    if (isDateType($fieldType))    return 'val_date';
+    return 'val_text';
+}
+
+    private function buildFilterCondition(array $filter): array
     {
-        $where  = '';
-        $params = [];
+        $f   = $filter['field'];
+        $op  = $filter['op'];
+        $val = $filter['val'];
+        $col = $this->valColumn($f['field_type']);
+        $fId = (int) $f['id'];
 
-        // Busca global
-        $q = trim($_GET['q'] ?? '');
-        if ($q !== '') {
-            $fieldIds = implode(',', array_column($fields, 'id') ?: [0]);
-            $ids      = \DB::q(
-                "SELECT DISTINCT record_id FROM record_values
-                  WHERE field_id IN ({$fieldIds}) AND val_text LIKE ?",
-                ["%{$q}%"]
-            );
-            $idList = implode(',', array_column($ids, 'record_id') ?: [0]);
-            $where .= " AND r.id IN ({$idList})";
+        $operators = [
+            'eq'          => ["rv2.{$col} = ?",           [$val]],
+            'neq'         => ["rv2.{$col} != ?",          [$val]],
+            'gt'          => ["rv2.{$col} > ?",            [$val]],
+            'lt'          => ["rv2.{$col} < ?",            [$val]],
+            'gte'         => ["rv2.{$col} >= ?",           [$val]],
+            'lte'         => ["rv2.{$col} <= ?",           [$val]],
+            'contains'    => ["rv2.{$col} LIKE ?",         ["%{$val}%"]],
+            'starts_with' => ["rv2.{$col} LIKE ?",         ["{$val}%"]],
+            'empty'       => ["(rv2.{$col} IS NULL OR rv2.{$col} = '')", []],
+            'not_empty'   => ["rv2.{$col} IS NOT NULL AND rv2.{$col} != ''", []],
+            'in'          => null, // tratado separado
+        ];
+
+        if ($op === 'in') {
+            $vals  = array_map('trim', explode(',', $val));
+            $marks = implode(',', array_fill(0, count($vals), '?'));
+            $cond  = "rv2.{$col} IN ({$marks})";
+            return [$fId, $cond, $vals];
         }
 
-        // Filtro por slug de campo: ?nome_cliente=João
-        $slugMap = array_column($fields, null, 'slug');
-        foreach ($_GET as $key => $val) {
-            if (!isset($slugMap[$key])) continue;
-            $f    = $slugMap[$key];
-            $col  = in_array($f['field_type'], ['number', 'currency'], true)
-                ? 'val_num'
-                : (in_array($f['field_type'], ['date', 'datetime'], true) ? 'val_date' : 'val_text');
-            $where .= " AND EXISTS (
-                SELECT 1 FROM record_values rv2
-                 WHERE rv2.record_id = r.id
-                   AND rv2.field_id  = ?
-                   AND rv2.{$col}    = ?
-            )";
-            $params[] = (int) $f['id'];
-            $params[] = $val;
-        }
-
-        return [$where, $params];
+        [$cond, $params] = $operators[$op] ?? $operators['eq'];
+        return [$fId, $cond, $params];
     }
 
     /**
