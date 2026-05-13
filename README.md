@@ -1,73 +1,83 @@
 # FlexCore
 
-**FlexCore** é um framework de dados dinâmico, auto-hospedado, construído em PHP. Permite criar entidades personalizadas (tabelas), definir campos de qualquer tipo, gerenciar registros via interface web e expor tudo por uma API REST — sem escrever uma linha de código ou mexer no banco de dados.
+**FlexCore** is a self-hosted dynamic data framework built with PHP. It allows you to create custom entities (tables), define fields of any type, manage records through a web interface, and expose everything through a REST API — without writing a single line of code or touching the database.
 
-Pense nele como um "Airtable self-hosted" com suporte a automações, sistema de plugins, auditoria completa e internacionalização.
-
----
-
-## Funcionalidades
-
-**Entidades dinâmicas**
-Crie quantas "tabelas" quiser — Clientes, Projetos, Leads, Contratos etc. — diretamente pela interface. Cada entidade tem nome, slug único, ícone e cor de identificação.
-
-**Campos tipados**
-Cada entidade aceita campos de 29 tipos, organizados em 8 grupos:
-
-- **Texto e comunicação** — texto curto, texto longo, rich text (HTML), e-mail, URL, telefone, senha/dado sensível
-- **Números e valores** — número, moeda, percentual, avaliação (estrelas 1–5), progresso (0–100%), duração
-- **Data e tempo** — data, data e hora, hora, intervalo de datas
-- **Seleção e listas** — lista (única), lista (múltipla), caixa de seleção, tags livres, usuário do sistema, cor (color picker)
-- **Relacionamentos** — relação com outra entidade
-- **Dados especiais** — UUID (auto-gerado), JSON livre, IP/hostname
-- **Mídia e arquivos** — imagem (PNG/JPG/WEBP/GIF) e arquivo genérico, ambos armazenados como base64 no banco de dados (MEDIUMTEXT, ≈16MB máx.)
-
-**CRUD completo de registros**
-Listagem em três modos — tabela (com ordenação por coluna ASC/DESC), cards e kanban — com filtros avançados por campo (11 operadores), busca global e paginação. Formulário de criação/edição, visualização de detalhe e exclusão — tudo gerado automaticamente a partir da definição de campos. Preferência de visualização salva por usuário e por entidade.
-
-**API REST completa**
-Toda entidade é exposta via API com CRUD completo. Autenticação por API Key (Bearer token), rate limiting por janela deslizante de 60 segundos, paginação, filtros por campo e ordenação. Documentação interativa disponível em `/api/docs`.
-
-**Automações**
-Configure regras "se acontecer X, faça Y" sem código. Dispare ações ao criar, atualizar ou deletar registros, com condições opcionais por campo. Ação disponível: Webhook (POST/PUT/PATCH) com retry automático (3 tentativas, backoff exponencial).
-
-**Sistema de Plugins**
-Estenda o FlexCore sem modificar o core. Plugins são pastas com `plugin.json` + `Plugin.php`. O sistema de Hooks (Actions e Filters) permite interceptar qualquer evento do ciclo de vida dos registros.
-
-**Usuários e controle de acesso**
-Três papéis globais: `admin` (acesso total), `editor` (cria e edita registros), `viewer` (somente leitura). Permissões granulares por entidade permitem configurar, para cada papel, se pode criar, editar ou excluir registros daquela entidade específica.
-
-**Auditoria**
-Todo evento relevante — criação, edição, exclusão de entidades e registros — é registrado no `audit_log` com usuário, IP e descrição.
-
-**Internacionalização**
-Interface disponível em Português (pt_BR), Inglês (en_US), Espanhol (es), Francês (fr) e Alemão (de). Idioma configurável por usuário ou globalmente.
-
-**Instalador web**
-Wizard de instalação guiado — basta apontar o domínio e fornecer as credenciais do banco.
+Think of it as a “self-hosted Airtable” with support for automations, a plugin system, full audit logging, and internationalization.
 
 ---
 
-## Requisitos
+## Features
 
-- PHP 7.4 ou superior
-- MySQL 5.7+ ou MariaDB 10.3+
-- Servidor web com suporte a `mod_rewrite` (Apache) ou `try_files` (Nginx)
-- Extensões PHP: `pdo`, `pdo_mysql`, `json`, `mbstring`
+### **Dynamic Entities**
+
+Create as many “tables” as you want — Customers, Projects, Leads, Contracts, etc. — directly from the interface. Each entity has a name, unique slug, icon, and identification color.
+
+### **Typed Fields**
+
+Each entity supports 29 field types, organized into 8 groups:
+
+* **Text & communication** — short text, long text, rich text (HTML), email, URL, phone, password/sensitive data
+* **Numbers & values** — number, currency, percentage, rating (1–5 stars), progress (0–100%), duration
+* **Date & time** — date, datetime, time, date range
+* **Selections & lists** — select (single), multiselect, checkbox, free tags, system user, color picker
+* **Relationships** — relation to another entity
+* **Special data** — UUID (auto-generated), raw JSON, IP/hostname
+* **Media & files** — image (PNG/JPG/WEBP/GIF) and generic file uploads, both stored as base64 in the database (`MEDIUMTEXT`, ~16MB max)
+
+### **Complete Record CRUD**
+
+Three listing modes — table (with ASC/DESC column sorting), cards, and kanban — including advanced field filtering (11 operators), global search, and pagination. Create/edit forms, detail views, and deletion are all automatically generated from field definitions. View preferences are saved per user and per entity.
+
+### **Complete REST API**
+
+Every entity is automatically exposed through a full CRUD API. Authentication uses API Keys (Bearer token), with sliding-window rate limiting (60 seconds), pagination, field filters, and sorting support. Interactive documentation is available at `/api/docs`.
+
+### **Automations**
+
+Configure rules like “if X happens, do Y” without code. Trigger actions when records are created, updated, or deleted, with optional field-based conditions. Available action: Webhook (POST/PUT/PATCH) with automatic retry support (3 attempts, exponential backoff).
+
+### **Plugin System**
+
+Extend FlexCore without modifying the core. Plugins are folders containing `plugin.json` + `Plugin.php`. The Hooks system (Actions and Filters) allows interception of any record lifecycle event.
+
+### **Users & Access Control**
+
+Three global roles: `admin` (full access), `editor` (can create and edit records), and `viewer` (read-only). Granular entity permissions allow configuring whether each role can create, edit, or delete records for a specific entity.
+
+### **Audit Logging**
+
+Every relevant event — entity creation, updates, deletions, and record changes — is logged in `audit_log` with user, IP address, and description.
+
+### **Internationalization**
+
+Interface available in Portuguese (`pt_BR`), English (`en_US`), Spanish (`es`), French (`fr`), and German (`de`). Language can be configured globally or per user.
+
+### **Web Installer**
+
+Guided installation wizard — simply point your domain and provide your database credentials.
 
 ---
 
-## Instalação
+## Requirements
 
-**1. Faça o upload dos arquivos para o servidor**
+* PHP 7.4 or higher
+* MySQL 5.7+ or MariaDB 10.3+
+* Web server with `mod_rewrite` (Apache) or `try_files` (Nginx) support
+* PHP extensions: `pdo`, `pdo_mysql`, `json`, `mbstring`
+
+---
+
+## Installation
+
+### **1. Upload the files to your server**
 
 ```bash
 git clone https://github.com/marcossancal/FlexCore
 ```
 
-**2. Configure o servidor web**
+### **2. Configure the web server**
 
-O arquivo `.htaccess` já está incluído para Apache. Para Nginx, adicione ao bloco `server`:
+The `.htaccess` file is already included for Apache. For Nginx, add this to your `server` block:
 
 ```nginx
 location / {
@@ -75,123 +85,124 @@ location / {
 }
 ```
 
-**3. Acesse o instalador**
+### **3. Run the installer**
 
-Abra `https://seusite.com/install/` no navegador e siga o wizard. O instalador vai:
-- Validar a conexão com o banco
-- Criar todas as tabelas
-- Solicitar os dados do usuário administrador
-- Gerar o arquivo `.env`
-- Criar o arquivo `.installed` para travar o instalador
+Open `https://yourdomain.com/install/` in your browser and follow the wizard. The installer will:
 
-**4. Faça login**
+* Validate the database connection
+* Create all required tables
+* Ask for the administrator account information
+* Generate the `.env` file
+* Create the `.installed` file to lock the installer
 
-Acesse `https://seusite.com/login` com as credenciais criadas na instalação.
+### **4. Login**
+
+Access `https://yourdomain.com/login` using the credentials created during installation.
 
 ---
 
-## Configuração (`.env`)
+## Configuration (`.env`)
 
 ```env
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=flexcore
 DB_USER=root
-DB_PASS=sua_senha
-APP_URL=https://seusite.com.br
+DB_PASS=your_password
+APP_URL=https://yourdomain.com
 DEBUG=false
 ```
 
-Nunca comita o `.env` em repositórios públicos. Use `.env.example` como modelo.
+Never commit your `.env` file to public repositories. Use `.env.example` as a template.
 
 ---
 
-## Estrutura de diretórios
+## Directory Structure
 
-```
+```text
 flexcore/
 ├── index.php               # Entry point
 ├── config/
-│   ├── bootstrap.php       # Bootstrap: env, sessão, autoload
+│   ├── bootstrap.php       # Bootstrap: env, session, autoload
 │   ├── container.php       # DI Container (bindings)
-│   └── routes.php          # Mapa central de rotas
+│   └── routes.php          # Central route map
 ├── core/
-│   ├── Container/          # Injeção de dependência
-│   ├── Hooks/              # Sistema de eventos (Actions + Filters)
-│   └── Router/             # Roteador HTTP (GET, POST, PUT, DELETE + middleware)
+│   ├── Container/          # Dependency injection
+│   ├── Hooks/              # Event system (Actions + Filters)
+│   └── Router/             # HTTP router (GET, POST, PUT, DELETE + middleware)
 ├── app/
-│   ├── Controllers/        # Controllers MVC (interface web)
-│   ├── Repositories/       # Acesso a dados
-│   ├── Services/           # Lógica de negócio
-│   └── views/              # Templates PHP
+│   ├── Controllers/        # MVC controllers (web interface)
+│   ├── Repositories/       # Data access
+│   ├── Services/           # Business logic
+│   └── views/              # PHP templates
 ├── api/
-│   ├── Controllers/        # Controllers da API REST
-│   ├── Formatters/         # Formatação de respostas JSON
-│   └── Middleware/         # Auth + Rate Limiting da API
+│   ├── Controllers/        # REST API controllers
+│   ├── Formatters/         # JSON response formatting
+│   └── Middleware/         # API Auth + Rate Limiting
 ├── modules/
-│   ├── Automations/        # Engine de automações + actions
-│   └── Plugins/            # Loader e interfaces de plugins
-├── plugins/                # Plugins instalados
+│   ├── Automations/        # Automation engine + actions
+│   └── Plugins/            # Plugin loader and interfaces
+├── plugins/                # Installed plugins
 ├── lib/
-│   ├── DB.php              # Wrapper PDO
-│   ├── Auth.php            # Autenticação de sessão
-│   └── helpers.php         # Funções globais
-├── translates/             # Arquivos de idioma (JSON)
-├── install/                # Wizard de instalação
-└── docs/                   # Documentação de plugins
+│   ├── DB.php              # PDO wrapper
+│   ├── Auth.php            # Session authentication
+│   └── helpers.php         # Global helper functions
+├── translates/             # Language files (JSON)
+├── install/                # Installation wizard
+└── docs/                   # Plugin documentation
 ```
 
 ---
 
-## Uso rápido
+## Quick Start
 
-**Criar uma entidade**
+### **Create an Entity**
 
-1. Vá em **Entidades → Nova entidade**
-2. Defina nome, slug, ícone e cor
-3. Em **Campos**, adicione os campos desejados
-4. Comece a cadastrar registros em **`/e/{slug}`**
+1. Go to **Entities → New Entity**
+2. Define the name, slug, icon, and color
+3. Under **Fields**, add the desired fields
+4. Start creating records at **`/e/{slug}`**
 
-**Criar uma automação**
+### **Create an Automation**
 
-1. Vá em **Automações → Nova automação**
-2. Selecione a entidade e o evento (criação/atualização/exclusão)
-3. Defina condições opcionais por campo
-4. Configure a URL do webhook de destino
+1. Go to **Automations → New Automation**
+2. Select the entity and event (create/update/delete)
+3. Define optional field-based conditions
+4. Configure the destination webhook URL
 
 ---
 
-## API REST
+## REST API
 
-A API usa autenticação por Bearer token. Gere uma chave em **API & Chaves → Nova chave** e inclua no header de todas as requisições:
+The API uses Bearer token authentication. Generate a key in **API & Keys → New Key** and include it in all requests:
 
-```
-Authorization: Bearer fc_sua_chave_aqui
+```text
+Authorization: Bearer fc_your_api_key_here
 ```
 
 ### Endpoints
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/api/v1/entities` | Lista entidades ativas |
-| `GET` | `/api/v1/e/{slug}` | Lista registros (paginado) |
-| `GET` | `/api/v1/e/{slug}/{id}` | Detalhe de um registro |
-| `POST` | `/api/v1/e/{slug}` | Cria um registro |
-| `PUT` | `/api/v1/e/{slug}/{id}` | Atualiza um registro |
-| `DELETE` | `/api/v1/e/{slug}/{id}` | Exclui um registro (204) |
+| Method   | Route                   | Description              |
+| -------- | ----------------------- | ------------------------ |
+| `GET`    | `/api/v1/entities`      | List active entities     |
+| `GET`    | `/api/v1/e/{slug}`      | List records (paginated) |
+| `GET`    | `/api/v1/e/{slug}/{id}` | Record details           |
+| `POST`   | `/api/v1/e/{slug}`      | Create a record          |
+| `PUT`    | `/api/v1/e/{slug}/{id}` | Update a record          |
+| `DELETE` | `/api/v1/e/{slug}/{id}` | Delete a record (204)    |
 
-### Parâmetros de listagem (`GET /api/v1/e/{slug}`)
+### Listing Parameters (`GET /api/v1/e/{slug}`)
 
-| Parâmetro | Tipo | Padrão | Descrição |
-|-----------|------|--------|-----------|
-| `page` | int | `1` | Página atual |
-| `per_page` | int | `25` | Registros por página (máx. 100) |
-| `q` | string | — | Busca global em todos os campos de texto |
-| `{slug_do_campo}` | string | — | Filtro por campo específico (valor exato) |
-| `sort` | string | — | Slug do campo para ordenar |
-| `dir` | `asc\|desc` | `desc` | Direção da ordenação |
+| Parameter      | Type        | Default | Description                             |
+| -------------- | ----------- | ------- | --------------------------------------- |
+| `page`         | int         | `1`     | Current page                            |
+| `per_page`     | int         | `25`    | Records per page (max. 100)             |
+| `q`            | string      | —       | Global search across text fields        |
+| `{field_slug}` | string      | —       | Exact match filter for a specific field |
+| `sort`         | string      | —       | Field slug used for sorting             |
+| `dir`          | `asc\|desc` | `desc`  | Sorting direction                       |
 
-### Formato de resposta
+### Response Format
 
 ```json
 {
@@ -201,10 +212,10 @@ Authorization: Bearer fc_sua_chave_aqui
       "created_at": "2026-05-11 10:30:00",
       "updated_at": "2026-05-11 10:30:00",
       "fields": {
-        "nome": "Maria Silva",
+        "name": "Maria Silva",
         "email": "maria@email.com",
-        "valor": 1500.00,
-        "ativo": true
+        "amount": 1500.00,
+        "active": true
       }
     }
   ],
@@ -218,81 +229,82 @@ Authorization: Bearer fc_sua_chave_aqui
 }
 ```
 
-Os campos em `fields` são indexados pelo **slug** do campo (não pelo `id`). Tipos numéricos retornam `float`, checkboxes retornam `bool`, multiselect retornam `array`.
+Fields inside `fields` are indexed by the field **slug** (not by `id`). Numeric field types return `float`, checkboxes return `bool`, and multiselect fields return `array`.
 
-### Exemplos com curl
+### curl Examples
 
 ```bash
-# Listar registros com filtro e paginação
-curl -H "Authorization: Bearer fc_sua_chave" \
-  "https://seusite.com/api/v1/e/clientes?page=1&per_page=10&sort=nome&dir=asc"
+# List records with filters and pagination
+curl -H "Authorization: Bearer fc_your_key" \
+  "https://yourdomain.com/api/v1/e/customers?page=1&per_page=10&sort=name&dir=asc"
 
-# Filtrar por campo específico
-curl -H "Authorization: Bearer fc_sua_chave" \
-  "https://seusite.com/api/v1/e/clientes?cidade=Guarulhos"
+# Filter by a specific field
+curl -H "Authorization: Bearer fc_your_key" \
+  "https://yourdomain.com/api/v1/e/customers?city=NewYork"
 
-# Busca global
-curl -H "Authorization: Bearer fc_sua_chave" \
-  "https://seusite.com/api/v1/e/clientes?q=maria"
+# Global search
+curl -H "Authorization: Bearer fc_your_key" \
+  "https://yourdomain.com/api/v1/e/customers?q=maria"
 
-# Criar registro (JSON)
+# Create record (JSON)
 curl -X POST \
-  -H "Authorization: Bearer fc_sua_chave" \
+  -H "Authorization: Bearer fc_your_key" \
   -H "Content-Type: application/json" \
-  -d '{"nome": "João Souza", "email": "joao@email.com", "valor": 2500}' \
-  "https://seusite.com/api/v1/e/clientes"
+  -d '{"name": "John Smith", "email": "john@email.com", "amount": 2500}' \
+  "https://yourdomain.com/api/v1/e/customers"
 
-# Atualizar registro
+# Update record
 curl -X PUT \
-  -H "Authorization: Bearer fc_sua_chave" \
+  -H "Authorization: Bearer fc_your_key" \
   -H "Content-Type: application/json" \
-  -d '{"nome": "João Souza Jr."}' \
-  "https://seusite.com/api/v1/e/clientes/42"
+  -d '{"name": "John Smith Jr."}' \
+  "https://yourdomain.com/api/v1/e/customers/42"
 
-# Excluir registro
+# Delete record
 curl -X DELETE \
-  -H "Authorization: Bearer fc_sua_chave" \
-  "https://seusite.com/api/v1/e/clientes/42"
+  -H "Authorization: Bearer fc_your_key" \
+  "https://yourdomain.com/api/v1/e/customers/42"
 ```
 
-### Códigos de erro
+### Error Codes
 
-| Código | Situação |
-|--------|---------|
-| `401` | Chave ausente, inválida ou expirada |
-| `403` | Chave sem permissão para esta entidade |
-| `404` | Entidade ou registro não encontrado |
-| `422` | Campo obrigatório ausente ou inválido |
-| `429` | Rate limit atingido (`Retry-After` no header) |
-
----
-
-## Instalar um plugin
-
-1. Vá em **Plugins → Instalar plugin**
-2. Faça upload do arquivo `.zip` do plugin
-3. Ative o plugin na lista
-4. Configure as opções do plugin (se houver)
-
-O FlexCore já vem com dois plugins:
-
-- **FlexCore Data Importer** — importa registros em massa via CSV com mapeamento de colunas para campos.
-- **FlexCore Data Exporter** — exporta registros para CSV ou Excel (.xlsx), respeitando filtros ativos e permitindo selecionar campos. Botão "⬇ Exportar" aparece automaticamente na listagem de cada entidade.
+| Code  | Situation                                           |
+| ----- | --------------------------------------------------- |
+| `401` | Missing, invalid, or expired API key                |
+| `403` | API key lacks permission for this entity            |
+| `404` | Entity or record not found                          |
+| `422` | Missing or invalid required field                   |
+| `429` | Rate limit exceeded (`Retry-After` header included) |
 
 ---
 
-## Segurança
+## Installing a Plugin
 
-- Senhas armazenadas com `password_hash()` (bcrypt)
-- API Keys armazenadas como hash SHA-256 (nunca em texto plano)
-- Todas as queries usam prepared statements via PDO
-- Saídas HTML escapadas com `htmlspecialchars()`
-- Rate limiting por janela deslizante de 60s por chave
-- Guard de sessão em todas as rotas web (exceto `/login`)
-- Rotas `/api/v1/*` ignoram sessão — autenticação exclusivamente por API Key
-- Permissões granulares por entidade controlam criação, edição e exclusão de registros por papel
+1. Go to **Plugins → Install Plugin**
+2. Upload the plugin `.zip` file
+3. Activate the plugin from the list
+4. Configure plugin options (if available)
+
+FlexCore already ships with two plugins:
+
+* **FlexCore Data Importer** — bulk import records from CSV with column-to-field mapping.
+* **FlexCore Data Exporter** — export records to CSV or Excel (`.xlsx`), respecting active filters and allowing field selection. An “⬇ Export” button automatically appears in each entity listing.
 
 ---
 
-## Licença
-Distribuído sob licença [GPLv3](LICENSE).
+## Security
+
+* Passwords stored using `password_hash()` (bcrypt)
+* API Keys stored as SHA-256 hashes (never in plain text)
+* All queries use prepared statements via PDO
+* HTML output escaped with `htmlspecialchars()`
+* Sliding-window rate limiting (60s per key)
+* Session guard applied to all web routes (except `/login`)
+* `/api/v1/*` routes ignore sessions — authentication exclusively through API Keys
+* Granular entity permissions control record creation, editing, and deletion per role
+
+---
+
+## License
+
+Distributed under the [GPLv3](LICENSE) license.
