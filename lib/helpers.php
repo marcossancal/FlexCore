@@ -14,6 +14,24 @@ function loadTranslations(string $lang): void
     }
     $GLOBALS['_fc_trans'] = json_decode(file_get_contents($file), true) ?? [];
     $GLOBALS['_fc_lang']  = $lang;
+
+    // -- Hook: translations.loaded --
+    // Plugins mesclam suas proprias traducoes sem editar os JSONs do core.
+    // O filtro recebe o array de traducoes atual e o lang ativo, e retorna
+    // o array com as chaves do plugin mescladas.
+    //
+    // Exemplo de uso no Plugin.php:
+    //   Hooks::filter('translations.loaded', function(array $trans, string $lang): array {
+    //       $file = __DIR__ . '/translates/' . $lang . '.json';
+    //       if (!file_exists($file)) $file = __DIR__ . '/translates/pt_BR.json';
+    //       $plugin = json_decode(file_get_contents($file), true) ?? [];
+    //       return array_replace_recursive($trans, $plugin);
+    //   });
+    $GLOBALS['_fc_trans'] = \FlexCore\Core\Hooks\Hooks::applyFilter(
+        'translations.loaded',
+        $GLOBALS['_fc_trans'],
+        [$lang]
+    );
 }
 
 function __(string $key, array $replace = []): string
