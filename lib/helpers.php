@@ -112,7 +112,7 @@ function money(float $v): string {
  */
 function allFieldTypes(): array
 {
-    return [
+    $coreTypes = [
         // ── Texto e comunicação ──────────────────────────────────────
         'text'        => ['icon' => '🔤', 'storage' => 'val_text'],
         'textarea'    => ['icon' => '📝', 'storage' => 'val_text'],
@@ -160,6 +160,16 @@ function allFieldTypes(): array
         // options_json: {"expression":"...", "output":"number|text|currency|percent"}
         'formula'     => ['icon' => '∑',  'storage' => 'val_num'],    // resultado numérico padrão; text vai para val_text
     ];
+
+    // ── Hook: field.types ─────────────────────────────────────────────
+    // Plugins registram tipos de campo adicionais via este filtro.
+    //
+    // Exemplo de uso no Plugin.php:
+    //   Hooks::filter('field.types', function(array $types): array {
+    //       $types['repeater'] = ['icon' => '🔁', 'storage' => 'repeater_values'];
+    //       return $types;
+    //   });
+    return \FlexCore\Core\Hooks\Hooks::applyFilter('field.types', $coreTypes);
 }
 
 function fieldTypeIcon(string $t): string
@@ -343,6 +353,21 @@ function renderFieldValue(array $field, mixed $val, bool $full = false): string
             case 'text':     return h((string)$val);
             default:         return h(number_format((float)$val, 4, ',', '.') * 1);  // strip trailing zeros via multiplication trick
         }
+    }
+
+    // ── Hook: field.render_value ──────────────────────────────────────
+    // Permite que plugins renderizem seus próprios tipos de campo.
+    // Retorna null para indicar que o tipo não é tratado pelo plugin
+    // (o core continua com o fallback h($val)).
+    //
+    // Exemplo de uso no Plugin.php:
+    //   Hooks::filter('field.render_value', function(?string $html, array $field, mixed $val, bool $full): ?string {
+    //       if ($field['field_type'] !== 'meu_tipo') return $html;
+    //       return '<span>' . h($val) . '</span>';
+    //   });
+    $pluginHtml = \FlexCore\Core\Hooks\Hooks::applyFilter('field.render_value', null, [$field, $val, $full]);
+    if ($pluginHtml !== null) {
+        return $pluginHtml;
     }
 
     return h($val);

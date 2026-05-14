@@ -71,7 +71,12 @@ class RecordController
         );
 
         foreach ($records as &$r) {
-            $r['values'] = $repo->loadValues($r['id']);
+            $values = $repo->loadValues($r['id']);
+            $values = \FlexCore\Core\Hooks\Hooks::applyFilter('record.values_loaded', $values, [
+                'record_id' => (int) $r['id'],
+                'fields'    => $fields,
+            ]);
+            $r['values'] = $values;
         }
         unset($r);
 
@@ -151,7 +156,12 @@ class RecordController
     {
         [$entity, $fields] = $this->resolveEntity($slug);
         $record = $this->resolveRecord($id, $entity['id']);
-        $record['values'] = $this->repo()->loadValues($id);
+        $values = $this->repo()->loadValues($id);
+        $values = \FlexCore\Core\Hooks\Hooks::applyFilter('record.values_loaded', $values, [
+            'record_id' => $id,
+            'fields'    => $fields,
+        ]);
+        $record['values'] = $values;
         view('records/show', compact('entity', 'fields', 'record'));
     }
 
@@ -162,7 +172,12 @@ class RecordController
         [$entity, $fields] = $this->resolveEntity($slug);
         $this->checkEntityPermission($entity, 'can_edit');
         $record = $this->resolveRecord($id, $entity['id']);
-        $record['values'] = $this->repo()->loadValues($id);
+        $values = $this->repo()->loadValues($id);
+        $values = \FlexCore\Core\Hooks\Hooks::applyFilter('record.values_loaded', $values, [
+            'record_id' => $id,
+            'fields'    => $fields,
+        ]);
+        $record['values'] = $values;
         $fields = $this->withRelationRecords($fields);
         view('records/form', compact('entity', 'fields', 'record'));
     }
@@ -384,6 +399,26 @@ class RecordController
                 $input[$key] = $_POST[$key] ?? null;
             }
         }
+
+        // -- Hook: record.input --
+        // Plugins adicionam ou transformam valores no input antes do RecordService.
+        // Recebe o $input montado pelo core e contexto com fields/$_POST/$_FILES.
+        // Deve retornar o $input (array) modificado.
+        //
+        // Exemplo:
+        //   Hooks::filter('record.input', function(array $input, array $ctx): array {
+        //       foreach ($ctx['fields'] as $f) {
+        //           if ($f['field_type'] !== 'meu_tipo') continue;
+        //           $input['field_' . $f['id']] = $ctx['post']['meu_' . $f['id']] ?? null;
+        //       }
+        //       return $input;
+        //   });
+        $input = \FlexCore\Core\Hooks\Hooks::applyFilter('record.input', $input, [
+            'fields' => $fields,
+            'post'   => $_POST,
+            'files'  => $_FILES,
+        ]);
+
         return $input;
     }
 

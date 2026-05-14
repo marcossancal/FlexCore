@@ -302,6 +302,23 @@ class EntityController
             return json_encode(['max_size_mb' => $maxMb]);
         }
 
+        // -- Hook: field.options_build --
+        // Plugins serializam as opcoes dos seus tipos de campo para options_json.
+        // Recebe null (valor inicial) e o fieldType. Retorna string JSON ou null.
+        //
+        // Exemplo:
+        //   Hooks::filter('field.options_build', function(?string $json, array $ctx): ?string {
+        //       if ($ctx['field_type'] !== 'meu_tipo') return $json;
+        //       return json_encode(['minha_config' => $_POST['minha_config'] ?? '']);
+        //   });
+        $pluginOptions = \FlexCore\Core\Hooks\Hooks::applyFilter('field.options_build', null, [
+            'field_type' => $fieldType,
+            'post'       => $_POST,
+        ]);
+        if ($pluginOptions !== null) {
+            return $pluginOptions;
+        }
+
         return null;
     }
 }

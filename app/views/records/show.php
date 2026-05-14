@@ -33,7 +33,10 @@
           <?= fieldTypeIcon($f['field_type']) ?> <?= h($f['name']) ?>
         </dt>
         <dd style="padding:12px 0 12px 16px;border-bottom:1px solid var(--bd);font-size:.88rem;color:var(--mt2)">
-          <?php if ($val === null || $val === ''): ?>
+          <?php
+          // field.render_value — delega para plugin se o tipo não for nativo.
+          // renderFieldValue() já dispara o hook internamente para tipos desconhecidos.
+          if ($val === null || $val === ''): ?>
           <span style="color:var(--mt);font-style:italic">—</span>
           <?php else: ?>
           <?= renderFieldValue($f, $val, true) ?>

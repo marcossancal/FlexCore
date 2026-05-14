@@ -227,6 +227,14 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
               </th>
               <?php endforeach ?>
               <th><?= __('general.created_at') ?></th>
+              <?php
+              // -- Hook: records.list.columns (header) --
+              // Plugins adicionam <th> extras na tabela de listagem.
+              echo \FlexCore\Core\Hooks\Hooks::applyFilter('records.list.columns.header', '', [
+                  'entity' => $entity,
+                  'fields' => $fields,
+              ]);
+              ?>
               <th style="width:80px"></th>
             </tr>
           </thead>
@@ -238,6 +246,15 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
             <td><?= renderFieldValue($f, $rec['values'][$f['id']] ?? null) ?></td>
             <?php endforeach ?>
             <td style="font-size:.75rem;color:var(--mt)"><?= dateBr($rec['created_at']) ?></td>
+            <?php
+            // -- Hook: records.list.columns (row cell) --
+            // Plugins adicionam <td> extras em cada linha da tabela.
+            echo \FlexCore\Core\Hooks\Hooks::applyFilter('records.list.columns.cell', '', [
+                'entity' => $entity,
+                'record' => $rec,
+                'fields' => $fields,
+            ]);
+            ?>
             <td>
               <div class="td-actions">
                 <a href="<?= url('/e/' . h($entity['slug']) . '/' . $rec['id']) ?>" class="btn btn-ghost btn-xs"><?= __('records.view') ?></a>

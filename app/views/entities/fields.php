@@ -167,6 +167,25 @@
             <optgroup label="Campos calculados">
               <option value="formula">∑ <?= __('fields.types.formula') ?></option>
             </optgroup>
+            <?php
+            // -- Hook: field.types (select options) --
+            // Exibe os tipos registrados por plugins no <select> de tipo de campo.
+            $pluginTypes = array_diff_key(allFieldTypes(), array_flip([
+                'text','textarea','richtext','email','url','phone','password',
+                'number','currency','percent','rating','progress','duration',
+                'date','datetime','time','daterange',
+                'select','multiselect','checkbox','tags','user','color',
+                'relation','uuid','json','ip','image','file','formula',
+            ]));
+            if (!empty($pluginTypes)): ?>
+            <optgroup label="Plugins">
+              <?php foreach ($pluginTypes as $typeKey => $typeDef): ?>
+              <option value="<?= h($typeKey) ?>">
+                <?= h($typeDef['icon'] ?? '') ?> <?= h(__('fields.types.' . $typeKey)) ?>
+              </option>
+              <?php endforeach; ?>
+            </optgroup>
+            <?php endif; ?>
           </select>
         </div>
 
@@ -229,6 +248,25 @@
           </div>
         </div>
 
+        <?php
+        // -- Hook: field.render_config --
+        // Plugins injetam HTML de configuracao para seus tipos de campo.
+        // O HTML e inserido abaixo dos paineis nativos (select, formula, etc.).
+        // O plugin deve renderizar apenas quando field_type bater com o seu tipo.
+        //
+        // Exemplo:
+        //   Hooks::filter('field.render_config', function(string $html, array $ctx): string {
+        //       ob_start();
+        //       include __DIR__ . '/views/_meu_config.php';
+        //       return $html . ob_get_clean();
+        //   });
+        echo \FlexCore\Core\Hooks\Hooks::applyFilter('field.render_config', '', [
+            'entity'   => $entity,
+            'field'    => null, // preenchido via JS ao editar; null ao criar
+            'entities' => $all_entities,
+        ]);
+        ?>
+
         <div style="display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap">
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.84rem">
             <input type="checkbox" name="required" id="fld-required" value="1" style="accent-color:var(--ac);width:auto">
@@ -271,6 +309,9 @@ function onTipoChange(t) {
   document.getElementById('fld-relation-wrap').style.display = t === 'relation' ? 'block' : 'none';
   document.getElementById('fld-maxsize-wrap').style.display  = ['image','file'].includes(t) ? 'block' : 'none';
   document.getElementById('fld-formula-wrap').style.display  = t === 'formula' ? 'block' : 'none';
+  // Notifica plugins registrados via field.render_config.
+  // Cada plugin escuta este evento e exibe/oculta seu painel.
+  document.dispatchEvent(new CustomEvent('flexcore:fieldTypeChange', { detail: { type: t } }));
 }
 function editarCampo(f) {
   document.getElementById('field-form-title').textContent = '✏️ <?= __('fields.edit') ?>';

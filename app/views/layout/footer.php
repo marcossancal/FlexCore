@@ -23,6 +23,13 @@
     </span>
   </footer>
 
+<?php
+// -- Hook: layout.footer_scripts --
+// Plugins injetam JS antes de </body>.
+// Exemplo: Hooks::filter('layout.footer_scripts', function(string $html): string {
+//     return $html . '<script src="...">' . '</script>'; });
+echo \FlexCore\Core\Hooks\Hooks::applyFilter('layout.footer_scripts', '');
+?>
 </div><!-- .main -->
 </body>
 </html>

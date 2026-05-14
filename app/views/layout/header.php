@@ -338,6 +338,13 @@ foreach ($_navItems as $item) {
       .td-actions{flex-wrap:wrap}
     }
   </style>
+  <?php
+  // -- Hook: layout.head --
+  // Plugins injetam CSS ou meta tags antes de </head>.
+  // Exemplo: Hooks::filter('layout.head', function(string $html): string {
+  //     return $html . '<link rel="stylesheet" href="...">'; });
+  echo \FlexCore\Core\Hooks\Hooks::applyFilter('layout.head', '');
+  ?>
 </head>
 <body>
 

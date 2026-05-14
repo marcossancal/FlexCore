@@ -416,8 +416,16 @@ partial('layout/header', [
               <?php break;
 
             // ── Default (fallback) ────────────────────────────────────
-            default: ?>
+            // ── Default: abre para plugins via hook ───────────────────
+            // field.render_form — Filter
+            // Plugins retornam o HTML do campo. Retornar null = não tratado.
+            default:
+              $pluginFieldHtml = \FlexCore\Core\Hooks\Hooks::applyFilter('field.render_form', null, [$f, $name, $currentVal, $required]);
+              if ($pluginFieldHtml !== null) {
+                  echo $pluginFieldHtml;
+              } else { ?>
               <input type="text" name="<?= h($name) ?>" value="<?= h($currentVal ?? '') ?>" <?= $required ?>>
+              <?php } ?>
           <?php endswitch; ?>
         </div>
         <?php endforeach; ?>
