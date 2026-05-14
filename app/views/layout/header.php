@@ -210,7 +210,7 @@ foreach ($_navItems as $item) {
     html{min-height:100%}
     body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;line-height:1.5;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-    .sidebar{width:var(--sb);min-height:100vh;background:var(--sb-bg);border-right:1px solid var(--sb-bd);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:200;overflow-y:auto;transition:transform var(--tr);}
+    .sidebar{overflow-y:auto;width:var(--sb);min-height:100vh;background:var(--sb-bg);border-right:1px solid var(--sb-bd);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:200;overflow-y:auto;transition:transform var(--tr);}
     .sb-logo{height:var(--tbh);padding:0 16px;border-bottom:1px solid var(--sb-bd);display:flex;align-items:center;gap:10px;flex-shrink:0;}
     .sb-logo-mark{width:28px;height:28px;border-radius:8px;background:var(--ac);display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .sb-logo-mark svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round}
@@ -424,8 +424,7 @@ foreach ($_navItems as $item) {
         <?php if (!empty($breadcrumbs)): ?>
           <?php foreach ($breadcrumbs as $i => $b): ?>
             <?php if ($i > 0): ?><span class="sep">›</span><?php endif; ?>
-            <?php if (isset($b['url'])): ?><a href="<?= h($b['url']) ?>"><?= h($b['label']) ?></a>
-            <?php else: ?><span><?= h($b['label']) ?></span><?php endif; ?>
+            <?= h($b['label']) ?>
           <?php endforeach; ?>
         <?php else: ?>
           <span><?= h($page_title ?? $appName) ?></span>
