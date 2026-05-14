@@ -238,10 +238,10 @@ class PluginController
         $cacheFile = sys_get_temp_dir() . '/flexcore_registry_cache.json';
 
         // Usa cache se ainda válido
-        if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < self::REGISTRY_TTL) {
-            $cached = json_decode(file_get_contents($cacheFile), true);
-            if (is_array($cached)) return $cached;
-        }
+        // if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < self::REGISTRY_TTL) {
+        //     $cached = json_decode(file_get_contents($cacheFile), true);
+        //     if (is_array($cached)) return $cached;
+        // }
 
         // Busca do GitHub
         $ctx = stream_context_create([
