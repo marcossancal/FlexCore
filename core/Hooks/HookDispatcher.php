@@ -100,7 +100,7 @@ class HookDispatcher
         ksort($this->filters[$event]);
         foreach ($this->filters[$event] as $transformers) {
             foreach ($transformers as $transformer) {
-                $value = call_user_func_array($transformer, array_merge([$value], $extraArgs));
+                $value = call_user_func_array($transformer, array_values(array_merge([$value], $extraArgs)));
             }
         }
         return $value;
@@ -112,7 +112,7 @@ class HookDispatcher
         ksort(self::$staticFilters[$event]);
         foreach (self::$staticFilters[$event] as $transformers) {
             foreach ($transformers as $transformer) {
-                $value = call_user_func_array($transformer, array_merge([$value], $extraArgs));
+                $value = call_user_func_array($transformer, array_values(array_merge([$value], $extraArgs)));
             }
         }
         return $value;
