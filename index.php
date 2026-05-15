@@ -84,7 +84,14 @@ $_currentPath  = '/' . ltrim($_rel, '/');
 // API Rest routes uses API Key, there is no session needing
 $_isApiRoute = strpos($_currentPath, '/api/v1/') === 0;
 
-if (!$_onInstall && !$_isApiRoute && !in_array($_currentPath, $_publicRoutes, true) && !Auth::check()) {
+// Plugins can declare additional public routes via this filter.
+// Example inside Plugin.php boot():
+//   Hooks::filter('public_routes.match', function(bool $matched, string $path): bool {
+//       return $matched || strpos($path, '/front') === 0;
+//   });
+$_isPluginPublic = \FlexCore\Core\Hooks\Hooks::applyFilter('public_routes.match', false, [$_currentPath]);
+
+if (!$_onInstall && !$_isApiRoute && !$_isPluginPublic && !in_array($_currentPath, $_publicRoutes, true) && !Auth::check()) {
     header('Location: ' . BASE_PATH . '/login');
     exit;
 }
