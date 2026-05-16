@@ -19,9 +19,9 @@ class AuthController
     {
         if (!Auth::attempt(post('email'), post('password'))) {
             $_SESSION['login_error'] = 'E-mail ou senha incorretos.';
-            redirect('/login');
+            admin_redirect('/login');
         }
-        redirect('/');
+        admin_redirect('/');
     }
 
     public function logout(): void

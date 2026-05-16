@@ -34,7 +34,7 @@ class Auth
     public static function require(array $roles = []): void
     {
         if (!self::check()) {
-            header('Location: ' . BASE_PATH . '/login');
+            header('Location: ' . BASE_PATH . ADMIN_PATH . '/login');
             exit;
         }
         if ($roles && !in_array($_SESSION['user']['role'] ?? '', $roles)) {
@@ -55,7 +55,7 @@ class Auth
     public static function logout(): void
     {
         session_destroy();
-        header('Location: ' . BASE_PATH . '/login');
+        header('Location: ' . BASE_PATH . ADMIN_PATH . '/login');
         exit;
     }
 

@@ -54,12 +54,12 @@ partial('layout/header');
           <td><span class="badge <?= $a['active'] ? 'bg':'br' ?>"><?= $a['active'] ? __('general.active') : __('general.inactive') ?></span></td>
           <td>
             <div class="td-actions">
-              <a href="<?= url('/automations/'.$a['id'].'/logs') ?>" class="btn btn-ghost btn-xs">📋</a>
+              <a href="<?= admin_url('/automations/'.$a['id'].'/logs') ?>" class="btn btn-ghost btn-xs">📋</a>
               <button class="btn btn-ghost btn-xs" onclick='openEdit(<?= json_encode($a) ?>)'>✏️</button>
-              <form method="POST" action="<?= url('/automations/'.$a['id'].'/toggle') ?>" style="display:inline">
+              <form method="POST" action="<?= admin_url('/automations/'.$a['id'].'/toggle') ?>" style="display:inline">
                 <button class="btn btn-ghost btn-xs"><?= $a['active']?'⏸':'▶️' ?></button>
               </form>
-              <form method="POST" action="<?= url('/automations/'.$a['id'].'/delete') ?>" style="display:inline"
+              <form method="POST" action="<?= admin_url('/automations/'.$a['id'].'/delete') ?>" style="display:inline"
                     onsubmit="return confirm('<?= __('general.confirm') ?>?')">
                 <button class="btn btn-danger btn-xs">🗑</button>
               </form>
@@ -162,14 +162,14 @@ const ACTION_TPLS = {
 
 function openBuilder() {
   document.getElementById('builder-title').textContent = '<?= __('automations.new') ?>';
-  document.getElementById('builder-form').action = '<?= url('/automations/create') ?>';
+  document.getElementById('builder-form').action = '<?= admin_url('/automations/create') ?>';
   ['b-name','b-desc'].forEach(id=>document.getElementById(id).value='');
   renderActionCfg('webhook');
   BO.style.display = 'flex';
 }
 function openEdit(a) {
   document.getElementById('builder-title').textContent = '<?= __('general.edit') ?>';
-  document.getElementById('builder-form').action = '<?= url('/automations/') ?>'+a.id+'/update';
+  document.getElementById('builder-form').action = '<?= admin_url('/automations/') ?>'+a.id+'/update';
   document.getElementById('b-name').value = a.name;
   document.getElementById('b-desc').value = a.description||'';
   document.getElementById('b-entity').value = a.trigger_entity_id||'';

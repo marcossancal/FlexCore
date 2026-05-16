@@ -40,7 +40,7 @@ class SettingsController
         }
 
         flash('ok', __('settings.saved'));
-        redirect("/settings?tab={$tab}");
+        admin_redirect("/settings?tab={$tab}");
     }
 
     // ── Users ─────────────────────────────────────────────────────────
@@ -54,11 +54,11 @@ class SettingsController
 
         if (!$name || !$email || !$pwd) {
             flash('err', 'Nome, e-mail e senha obrigatórios.');
-            redirect('/settings?tab=usuarios');
+            admin_redirect('/settings?tab=usuarios');
         }
         if (DB::one('SELECT id FROM users WHERE email = ?', [$email])) {
             flash('err', 'E-mail já cadastrado.');
-            redirect('/settings?tab=usuarios');
+            admin_redirect('/settings?tab=usuarios');
         }
 
         DB::exec(
@@ -66,7 +66,7 @@ class SettingsController
             [$name, $email, password_hash($pwd, PASSWORD_DEFAULT), post('role', 'editor')]
         );
         flash('ok', "Usuário '{$name}' criado!");
-        redirect('/settings?tab=usuarios');
+        admin_redirect('/settings?tab=usuarios');
     }
 
     public function updateUser(int $id): void
@@ -81,7 +81,7 @@ class SettingsController
             [trim(post('name')), trim(post('email')), post('role', 'editor'), $id]
         );
         flash('ok', 'Usuário atualizado!');
-        redirect('/settings?tab=usuarios');
+        admin_redirect('/settings?tab=usuarios');
     }
 
     public function destroyUser(int $id): void
@@ -89,11 +89,11 @@ class SettingsController
         Auth::require(['admin']);
         if ($id === Auth::id()) {
             flash('err', 'Você não pode excluir sua própria conta.');
-            redirect('/settings?tab=usuarios');
+            admin_redirect('/settings?tab=usuarios');
         }
         DB::run('DELETE FROM users WHERE id = ?', [$id]);
         flash('ok', 'Usuário excluído.');
-        redirect('/settings?tab=usuarios');
+        admin_redirect('/settings?tab=usuarios');
     }
 
     // ── Internals ─────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ class SettingsController
         $langFile = BASE . '/translates/' . $lang . '.json';
         if (!file_exists($langFile)) {
             flash('err', 'Arquivo de idioma não encontrado.');
-            redirect('/settings?tab=lang');
+            admin_redirect('/settings?tab=lang');
         }
         DB::setSetting('app_lang', $lang, 'Idioma padrão', 'geral');
         loadTranslations($lang);

@@ -132,7 +132,7 @@ function codeColor(int $code): string {
 .group-sep      { font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mt);margin:20px 0 10px;padding-top:12px;border-top:1px solid var(--bd); }
 </style>
 
-<form method="POST" action="<?= url('/entities/'.$entity['id'].'/api-responses') ?>" id="api-resp-form">
+<form method="POST" action="<?= admin_url('/entities/'.$entity['id'].'/api-responses') ?>" id="api-resp-form">
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div>

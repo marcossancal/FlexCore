@@ -19,10 +19,10 @@ partial('layout/header', [
   </div>
   <div class="sec-actions">
     <?php if (count($fields) > 0): ?>
-    <a href="<?= url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>"> <?= __('records.new') ?></a>
+    <a href="<?= admin_url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>"> <?= __('records.new') ?></a>
     <?php endif; ?>
     <?php if (Auth::user()['role']==='admin'): ?>
-    <a href="<?= url('/entities/' . $entity['id'] . '/fields') ?>" class="btn btn-ghost btn-sm">🔧 <?= __('entities.fields') ?></a>
+    <a href="<?= admin_url('/entities/' . $entity['id'] . '/fields') ?>" class="btn btn-ghost btn-sm">🔧 <?= __('entities.fields') ?></a>
     <?php endif; ?>
     <?php echo \FlexCore\Core\Hooks\Hooks::applyFilter('records.list.actions', '', ['entity' => $entity]) ?>
   </div>
@@ -33,7 +33,7 @@ partial('layout/header', [
   <div style="font-size:2rem;margin-bottom:12px">🔧</div>
   <div style="font-family:var(--fd);font-size:1rem;font-weight:700;margin-bottom:8px"><?= __('records.no_fields') ?></div>
   <?php if (Auth::user()['role']==='admin'): ?>
-  <a href="<?= url('/entities/' . $entity['id'] . '/fields') ?>" class="btn btn-primary">🔧 <?= __('records.configure_first') ?></a>
+  <a href="<?= admin_url('/entities/' . $entity['id'] . '/fields') ?>" class="btn btn-primary">🔧 <?= __('records.configure_first') ?></a>
   <?php endif; ?>
 </div>
 
@@ -55,7 +55,7 @@ function buildFilterUrl(string $slug, array $rawFilters, string $q, string $sort
     foreach ($filters as $f)    { $qs[] = 'filters[]=' . urlencode($f); }
     if ($sortField !== '' && $sortField !== 'created_at') { $qs[] = 'sort_field=' . urlencode($sortField); }
     if ($sortDir !== 'desc') { $qs[] = 'sort_dir=asc'; }
-    return url('/e/' . $slug) . (count($qs) ? '?' . implode('&', $qs) : '');
+    return admin_url('/e/' . $slug) . (count($qs) ? '?' . implode('&', $qs) : '');
 }
 
 function sortUrl(string $slug, array $rawFilters, string $q, string $fid, string $currentField, string $currentDir): string
@@ -78,7 +78,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <span style="font-family:var(--fd);font-size:.85rem;font-weight:700">🔍 Filtros</span>
         <?php if ($hasActiveFilters): ?>
-        <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-xs btn-ghost" style="color:var(--rd)">✕ Limpar</a>
+        <a href="<?= admin_url('/e/' . h($entity['slug'])) ?>" class="btn btn-xs btn-ghost" style="color:var(--rd)">✕ Limpar</a>
         <?php endif; ?>
       </div>
 
@@ -165,7 +165,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
         foreach ($views as $vk => $vico):
           $isActive = $currentView === $vk;
         ?>
-        <form method="POST" action="<?= url('/e/' . h($entity['slug']) . '/set-view') ?>" style="display:inline">
+        <form method="POST" action="<?= admin_url('/e/' . h($entity['slug']) . '/set-view') ?>" style="display:inline">
           <input type="hidden" name="view" value="<?= $vk ?>">
           <?php if ($q !== ''): ?><input type="hidden" name="q" value="<?= h($q) ?>"><?php endif ?>
           <?php foreach ($rawFilters as $rf): ?><input type="hidden" name="filters[]" value="<?= h($rf) ?>"><?php endforeach ?>
@@ -187,9 +187,9 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
         <?= $hasActiveFilters ? 'Nenhum registro encontrado para estes filtros.' : __('records.no_records') ?>
       </div>
       <?php if ($hasActiveFilters): ?>
-      <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost">Limpar filtros</a>
+      <a href="<?= admin_url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost">Limpar filtros</a>
       <?php else: ?>
-      <a href="<?= url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>"> <?= __('records.new') ?></a>
+      <a href="<?= admin_url('/e/' . h($entity['slug']) . '/new') ?>" class="btn btn-primary" style="background:<?= h($entity['color']) ?>"> <?= __('records.new') ?></a>
       <?php endif ?>
     </div>
 
@@ -257,7 +257,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
             ?>
             <td>
               <div class="td-actions">
-                <a href="<?= url('/e/' . h($entity['slug']) . '/' . $rec['id']) ?>" class="btn btn-ghost btn-xs"><?= __('records.view') ?></a>
+                <a href="<?= admin_url('/e/' . h($entity['slug']) . '/' . $rec['id']) ?>" class="btn btn-ghost btn-xs"><?= __('records.view') ?></a>
               </div>
             </td>
           </tr>
@@ -286,7 +286,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
         $subField   = $lf[1] ?? null;
         $titleVal   = $titleField ? ($rec['values'][$titleField['id']] ?? null) : null;
       ?>
-      <a href="<?= url('/e/' . h($entity['slug']) . '/' . $rec['id']) ?>"
+      <a href="<?= admin_url('/e/' . h($entity['slug']) . '/' . $rec['id']) ?>"
          style="text-decoration:none;display:flex;flex-direction:column;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;transition:border-color .15s,background .15s"
          onmouseenter="this.style.borderColor='<?= h($entity['color']) ?>'"
          onmouseleave="this.style.borderColor='var(--bd)'">
@@ -358,7 +358,7 @@ $baseSep          = str_contains($baseUrl, '?') ? '&' : '?';
         <?php foreach ($colRecs as $rec):
           $tv = $titleField ? ($rec['values'][$titleField['id']] ?? null) : null;
         ?>
-        <a href="<?= url('/e/' . h($entity['slug']) . '/' . $rec['id']) ?>"
+        <a href="<?= admin_url('/e/' . h($entity['slug']) . '/' . $rec['id']) ?>"
            style="display:block;text-decoration:none;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);padding:12px 14px;margin-bottom:8px;transition:border-color .15s"
            onmouseenter="this.style.borderColor='<?= h($entity['color']) ?>'"
            onmouseleave="this.style.borderColor='var(--bd)'">

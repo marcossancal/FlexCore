@@ -5,7 +5,7 @@
   <div style="color:var(--mt);max-width:360px;margin-bottom:28px"><?= __('errors.403_desc') ?></div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
     <a href="javascript:history.back()" class="btn btn-ghost"><?= __('errors.go_back') ?></a>
-    <a href="<?= url('/') ?>" class="btn btn-primary"><?= __('errors.go_home') ?></a>
+    <a href="<?= admin_url('/') ?>" class="btn btn-primary"><?= __('errors.go_home') ?></a>
   </div>
 </div>
 <?php partial('layout/footer') ?>

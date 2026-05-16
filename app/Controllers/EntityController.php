@@ -51,7 +51,7 @@ class EntityController
         $name = trim(post('name'));
         if (!$name) {
             flash('err', 'Nome obrigatório.');
-            redirect('/entities/new');
+            admin_redirect('/entities/new');
         }
 
         $sl = slug(post('slug') ?: $name);
@@ -64,7 +64,7 @@ class EntityController
 
         audit('create_entity', $id, null, "Entidade '{$name}' criada");
         flash('ok', "Entidade '{$name}' criada! Agora configure os campos.");
-        redirect("/entities/{$id}/fields");
+        admin_redirect("/entities/{$id}/fields");
     }
 
     public function edit(int $id): void
@@ -89,7 +89,7 @@ class EntityController
         );
         audit('update_entity', $id, null, 'Entidade atualizada');
         flash('ok', 'Entidade atualizada!');
-        redirect('/entities');
+        admin_redirect('/entities');
     }
 
     public function destroy(int $id): void
@@ -99,7 +99,7 @@ class EntityController
         DB::run('DELETE FROM entities WHERE id = ?', [$id]);
         audit('delete_entity', $id, null, "Entidade '{$ent['name']}' excluída");
         flash('ok', "Entidade '{$ent['name']}' excluída.");
-        redirect('/entities');
+        admin_redirect('/entities');
     }
 
     public function bulkDestroy(): void
@@ -108,14 +108,14 @@ class EntityController
         $raw = trim(post('ids', ''));
         if (!$raw) {
             flash('err', 'Nenhuma entidade selecionada.');
-            redirect('/entities');
+            admin_redirect('/entities');
         }
 
         // Sanitiza: aceita apenas inteiros separados por vírgula
         $ids = array_filter(array_map('intval', explode(',', $raw)));
         if (empty($ids)) {
             flash('err', 'Seleção inválida.');
-            redirect('/entities');
+            admin_redirect('/entities');
         }
 
         $count = 0;
@@ -128,7 +128,7 @@ class EntityController
         }
 
         flash('ok', "{$count} entidade(s) excluída(s) com sucesso.");
-        redirect('/entities');
+        admin_redirect('/entities');
     }
 
     public function saveApiResponses(int $id): void
@@ -166,7 +166,7 @@ class EntityController
         );
         audit('update_entity', $id, null, "Respostas API da entidade #{$id} atualizadas");
         flash('ok', 'Respostas de API salvas!');
-        redirect("/entities/{$id}/edit?tab=api");
+        admin_redirect("/entities/{$id}/edit?tab=api");
     }
 
     // ── Fields ───────────────────────────────────────────────────────
@@ -195,7 +195,7 @@ class EntityController
         $name = trim(post('name'));
         if (!$name) {
             flash('err', 'Nome do campo obrigatório.');
-            redirect("/entities/{$eid}/fields");
+            admin_redirect("/entities/{$eid}/fields");
         }
 
         $sl   = str_replace('-', '_', slug(post('slug') ?: $name));
@@ -212,7 +212,7 @@ class EntityController
              (int) post('position', 0)]
         );
         flash('ok', "Campo '{$name}' adicionado!");
-        redirect("/entities/{$eid}/fields");
+        admin_redirect("/entities/{$eid}/fields");
     }
 
     public function updateField(int $eid, int $fid): void
@@ -232,7 +232,7 @@ class EntityController
              (int) post('position', 0), $fid, $eid]
         );
         flash('ok', 'Campo atualizado!');
-        redirect("/entities/{$eid}/fields");
+        admin_redirect("/entities/{$eid}/fields");
     }
 
     public function destroyField(int $eid, int $fid): void
@@ -241,7 +241,7 @@ class EntityController
         $f = DB::one('SELECT name FROM entity_fields WHERE id = ?', [$fid]);
         DB::run('DELETE FROM entity_fields WHERE id = ? AND entity_id = ?', [$fid, $eid]);
         flash('ok', "Campo '{$f['name']}' excluído.");
-        redirect("/entities/{$eid}/fields");
+        admin_redirect("/entities/{$eid}/fields");
     }
 
     // ── Permissions ──────────────────────────────────────────────────
@@ -276,7 +276,7 @@ class EntityController
 
         audit('update_entity', $id, null, "Permissões da entidade '{$entity['name']}' atualizadas");
         flash('ok', 'Permissões salvas!');
-        redirect("/entities/{$id}/edit?tab=permissoes");
+        admin_redirect("/entities/{$id}/edit?tab=permissoes");
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

@@ -31,7 +31,7 @@ class AutomationController
     {
         Auth::require(['admin']);
         $name = trim(post('name'));
-        if (!$name) { flash('err', 'Nome obrigatório.'); redirect('/automations'); }
+        if (!$name) { flash('err', 'Nome obrigatório.'); admin_redirect('/automations'); }
 
         $conditions = [];
         foreach ($_POST['cond'] ?? [] as $c) {
@@ -56,7 +56,7 @@ class AutomationController
             ]
         );
         flash('ok', "Automação \"{$name}\" criada!");
-        redirect('/automations');
+        admin_redirect('/automations');
     }
 
     public function update(int $id): void
@@ -80,7 +80,7 @@ class AutomationController
             ]
         );
         flash('ok', 'Automação atualizada!');
-        redirect('/automations');
+        admin_redirect('/automations');
     }
 
     public function toggle(int $id): void
@@ -89,7 +89,7 @@ class AutomationController
         $row = DB::one('SELECT active FROM automations WHERE id = ?', [$id]);
         DB::run('UPDATE automations SET active = ? WHERE id = ?', [$row['active'] ? 0 : 1, $id]);
         flash('ok', 'Status alterado.');
-        redirect('/automations');
+        admin_redirect('/automations');
     }
 
     public function destroy(int $id): void
@@ -97,7 +97,7 @@ class AutomationController
         Auth::require(['admin']);
         DB::run('DELETE FROM automations WHERE id = ?', [$id]);
         flash('ok', 'Automação excluída.');
-        redirect('/automations');
+        admin_redirect('/automations');
     }
 
     public function logs(int $id): void

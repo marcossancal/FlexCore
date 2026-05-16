@@ -13,7 +13,7 @@ partial('layout/header', [
 
 <div class="sec-head">
   <div class="sec-title"><?= $isEdit ? '✏️ '.__('entities.edit') : '+ '.__('entities.new') ?></div>
-  <a href="<?= url('/entities') ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
+  <a href="<?= admin_url('/entities') ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
 </div>
 
 <?php if ($isEdit): ?>
@@ -27,7 +27,7 @@ partial('layout/header', [
   ];
   foreach ($tabs as $tKey => $tVal):
   ?>
-  <a href="<?= url('/entities/'.$entity['id'].'/edit?tab='.$tKey) ?>"
+  <a href="<?= admin_url('/entities/'.$entity['id'].'/edit?tab='.$tKey) ?>"
      style="display:flex;align-items:center;gap:6px;padding:10px 18px;font-size:.875rem;font-weight:600;text-decoration:none;border-bottom:2px solid <?= $currentTab===$tKey?'var(--ac)':'transparent' ?>;color:<?= $currentTab===$tKey?'var(--ac)':'var(--mt)' ?>;margin-bottom:-1px;transition:all .15s">
     <?= $tVal['ico'] ?> <?= $tVal['label'] ?>
   </a>
@@ -36,7 +36,7 @@ partial('layout/header', [
 <?php endif; ?>
 
 <?php if (!$isEdit || ($_GET['tab']??'geral')==='geral'): ?>
-<form method="POST" action="<?= url( $isEdit ? '/entities/'.$entity['id'].'/update' : '/entities/create'); ?>">
+<form method="POST" action="<?= admin_url( $isEdit ? '/entities/'.$entity['id'].'/update' : '/entities/create'); ?>">
   <div class="row2" style="gap:18px;align-items:start">
     <div>
       <div class="card">
@@ -102,7 +102,7 @@ partial('layout/header', [
         </div>
 
         <div class="form-actions">
-          <a href="<?= url('/entities') ?>" class="btn btn-ghost"><?= __('general.cancel') ?></a>
+          <a href="<?= admin_url('/entities') ?>" class="btn btn-ghost"><?= __('general.cancel') ?></a>
           <button type="submit" class="btn btn-primary">💾 <?= $isEdit ? __('general.save') : __('entities.new') ?></button>
         </div>
       </div>
@@ -111,7 +111,7 @@ partial('layout/header', [
       <div class="card" style="border-color:rgba(0,212,255,.2)">
         <div class="card-title" style="font-size:.82rem">🔧 <?= __('entities.next_step') ?></div>
         <p style="color:var(--mt);font-size:.85rem;margin-bottom:14px"><?= __('entities.next_step_desc') ?></p>
-        <a href="<?= url('/entities/' . $entity['id'] . '/fields') ?>" class="btn btn-primary btn-sm" style="width:100%;justify-content:center"><?= __('entities.manage_fields') ?></a>
+        <a href="<?= admin_url('/entities/' . $entity['id'] . '/fields') ?>" class="btn btn-primary btn-sm" style="width:100%;justify-content:center"><?= __('entities.manage_fields') ?></a>
       </div>
       <?php endif; ?>
     </div>
@@ -190,7 +190,7 @@ function usarEmojiCustom() {
   $roleLabels = ['admin' => '👑 Admin', 'editor' => '✏️ Editor', 'viewer' => '👁️ Viewer'];
   $ops = ['can_create' => 'Criar', 'can_edit' => 'Editar', 'can_delete' => 'Excluir'];
 ?>
-<form method="POST" action="<?= url('/entities/'.$entity['id'].'/permissions') ?>">
+<form method="POST" action="<?= admin_url('/entities/'.$entity['id'].'/permissions') ?>">
   <div class="card">
     <div class="card-title">🔐 Permissões por papel</div>
     <p style="color:var(--mt);font-size:.83rem;margin-bottom:20px">
@@ -233,7 +233,7 @@ function usarEmojiCustom() {
     </div>
 
     <div class="form-actions">
-      <a href="<?= url('/entities/'.$entity['id'].'/edit?tab=permissoes') ?>" class="btn btn-ghost">Cancelar</a>
+      <a href="<?= admin_url('/entities/'.$entity['id'].'/edit?tab=permissoes') ?>" class="btn btn-ghost">Cancelar</a>
       <button type="submit" class="btn btn-primary">💾 Salvar permissões</button>
     </div>
   </div>

@@ -77,11 +77,13 @@ if (!$_onInstall) {
 }
 
 // ── 4. Login Guard  ────────────────────────────────────────────────
-// Public routes (no auth)
-$_publicRoutes = ['/login', '/logout'];
+// Public routes (no auth) — prefixed with ADMIN_PATH so the front-end
+// root is completely free. ADMIN_PATH is defined in bootstrap.php.
+$_adminPrefix  = ADMIN_PATH; // e.g. '/painel'
+$_publicRoutes = [$_adminPrefix . '/login', $_adminPrefix . '/logout'];
 $_currentPath  = '/' . ltrim($_rel, '/');
 
-// API Rest routes uses API Key, there is no session needing
+// API REST routes use API Key auth — no session needed
 $_isApiRoute = strpos($_currentPath, '/api/v1/') === 0;
 
 // Plugins can declare additional public routes via this filter.
@@ -92,7 +94,7 @@ $_isApiRoute = strpos($_currentPath, '/api/v1/') === 0;
 $_isPluginPublic = \FlexCore\Core\Hooks\Hooks::applyFilter('public_routes.match', false, [$_currentPath]);
 
 if (!$_onInstall && !$_isApiRoute && !$_isPluginPublic && !in_array($_currentPath, $_publicRoutes, true) && !Auth::check()) {
-    header('Location: ' . BASE_PATH . '/login');
+    header('Location: ' . BASE_PATH . ADMIN_PATH . '/login');
     exit;
 }
 

@@ -67,11 +67,11 @@ partial('layout/header', [
   <div class="sec-title">
     <?= $isEdit ? '✏️ '.__('records.edit') : '+' ?> <?= h($entity['name']) ?>
   </div>
-  <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
+  <a href="<?= admin_url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
 </div>
 
 <form method="POST" id="record-form"
-      action="<?= url($isEdit ? '/e/'.$entity['slug'].'/'.$record['id'].'/update' : '/e/'.$entity['slug'].'/create'); ?>"
+      action="<?= admin_url($isEdit ? '/e/'.$entity['slug'].'/'.$record['id'].'/update' : '/e/'.$entity['slug'].'/create'); ?>"
       enctype="multipart/form-data">
 
   <div class="row2" style="gap:18px;align-items:start">
@@ -80,7 +80,7 @@ partial('layout/header', [
         <div class="card-title"><?= __('records.title') ?></div>
 
         <?php if (empty($fields)): ?>
-        <p style="color:var(--mt)"><?= __('records.no_fields') ?> <a href="<?= url('/entities/' . $entity['id'] . '/fields') ?>" style="color:var(--ac)"><?= __('records.configure_first') ?></a></p>
+        <p style="color:var(--mt)"><?= __('records.no_fields') ?> <a href="<?= admin_url('/entities/' . $entity['id'] . '/fields') ?>" style="color:var(--ac)"><?= __('records.configure_first') ?></a></p>
         <?php else: ?>
         <?php foreach ($fields as $f):
           $currentVal = $record['values'][$f['id']] ?? null;
@@ -433,7 +433,7 @@ partial('layout/header', [
 
         <?php if (!empty($fields)): ?>
         <div class="form-actions">
-          <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost"><?= __('general.cancel') ?></a>
+          <a href="<?= admin_url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost"><?= __('general.cancel') ?></a>
           <button type="submit" class="btn btn-primary" style="background:<?= h($entity['color']) ?>">
             💾 <?= $isEdit ? __('general.save') : __('general.create') ?>
           </button>
@@ -452,7 +452,7 @@ partial('layout/header', [
           <div><span style="color:var(--mt)"><?= __('general.updated_at') ?>:</span> <?= dateBr($record['updated_at']) ?></div>
         </div>
         <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
-          <form method="POST" action="<?= url('e/'. h($entity['slug']).'/'. $record['id'].'/delete');?>"
+          <form method="POST" action="<?= admin_url('e/'. h($entity['slug']).'/'. $record['id'].'/delete');?>"
                 onsubmit="return confirm('<?= __('records.delete_confirm') ?>')">
             <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center">🗑️ <?= __('general.delete') ?></button>
           </form>

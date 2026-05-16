@@ -14,18 +14,18 @@
     <div class="sec-sub"><?= __('fields.api_responses') ?></div>
   </div>
   <div class="sec-actions">
-    <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost btn-sm">👁 <?= __('records.view') ?></a>
-    <a href="<?= url('/entities/' . $entity['id'] . '/edit') ?>" class="btn btn-ghost btn-sm">✏️ <?= __('general.edit') ?></a>
+    <a href="<?= admin_url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost btn-sm">👁 <?= __('records.view') ?></a>
+    <a href="<?= admin_url('/entities/' . $entity['id'] . '/edit') ?>" class="btn btn-ghost btn-sm">✏️ <?= __('general.edit') ?></a>
   </div>
 </div>
 
 <?php $activeTab = $_GET['tab'] ?? 'fields'; ?>
 <div style="display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:24px">
-  <a href="<?= url('/entities/'.$entity['id'].'/fields') ?>?tab=fields"
+  <a href="<?= admin_url('/entities/'.$entity['id'].'/fields') ?>?tab=fields"
      style="padding:10px 20px;font-size:.875rem;font-weight:600;text-decoration:none;border-bottom:2px solid <?= $activeTab==='fields'?'var(--ac)':'transparent' ?>;color:<?= $activeTab==='fields'?'var(--ac)':'var(--mt)' ?>;transition:all .15s">
     <?= __('fields.tab_fields') ?> <span style="background:var(--sf2);border-radius:10px;padding:1px 7px;font-size:.72rem;margin-left:4px"><?= count($fields) ?></span>
   </a>
-  <a href="<?= url('/entities/'.$entity['id'].'/fields') ?>?tab=api"
+  <a href="<?= admin_url('/entities/'.$entity['id'].'/fields') ?>?tab=api"
      style="padding:10px 20px;font-size:.875rem;font-weight:600;text-decoration:none;border-bottom:2px solid <?= $activeTab==='api'?'var(--ac)':'transparent' ?>;color:<?= $activeTab==='api'?'var(--ac)':'var(--mt)' ?>;transition:all .15s">
     <?= __('fields.tab_api') ?>
   </a>
@@ -74,7 +74,7 @@
           <div style="display:flex;gap:6px;align-items:center">
             <?= $f['show_in_list'] ? '<span class="badge bc" style="font-size:.65rem">lista</span>' : '' ?>
             <button type="button" onclick="editarCampo(<?= h(json_encode($f)) ?>)" class="btn btn-ghost btn-xs">✏️</button>
-            <form method="POST" action="<?= url('entities/'. $entity['id'].'/fields/'. $f['id']. '/delete')?>" style="display:inline"
+            <form method="POST" action="<?= admin_url('entities/'. $entity['id'].'/fields/'. $f['id']. '/delete')?>" style="display:inline"
                   onsubmit="return confirm('<?= __('fields.delete_confirm') ?>')">
               <button type="submit" class="btn btn-danger btn-xs">✕</button>
             </form>
@@ -104,7 +104,7 @@
     <div class="card" id="field-form-card" style="position:sticky;top:70px">
       <div class="card-title" id="field-form-title">➕ <?= __('fields.new') ?></div>
 
-      <form method="POST" id="field-form" action="<?= url('entities/'. $entity['id'].'/fields/create')?>">
+      <form method="POST" id="field-form" action="<?= admin_url('entities/'. $entity['id'].'/fields/create')?>">
         <input type="hidden" name="field_id" id="fld-id" value="">
 
         <div class="field">
@@ -315,7 +315,7 @@ function onTipoChange(t) {
 }
 function editarCampo(f) {
   document.getElementById('field-form-title').textContent = '✏️ <?= __('fields.edit') ?>';
-  document.getElementById('field-form').action = '<?= url('/entities/' . $entity['id'] . '/fields/') ?>' + f.id + '/update';
+  document.getElementById('field-form').action = '<?= admin_url('/entities/' . $entity['id'] . '/fields/') ?>' + f.id + '/update';
   document.getElementById('fld-id').value       = f.id;
   document.getElementById('fld-name').value     = f.name;
   document.getElementById('fld-slug').value     = f.slug;
@@ -340,7 +340,7 @@ function editarCampo(f) {
 }
 function resetFieldForm() {
   document.getElementById('field-form-title').textContent = '➕ <?= __('fields.new') ?>';
-  document.getElementById('field-form').action = '<?= url('/entities/' . $entity['id'] . '/fields/create') ?>';
+  document.getElementById('field-form').action = '<?= admin_url('/entities/' . $entity['id'] . '/fields/create') ?>';
   document.getElementById('field-form').reset();
   document.getElementById('fld-id').value = '';
   document.getElementById('fld-options-wrap').style.display = 'none';

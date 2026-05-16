@@ -48,16 +48,16 @@ class PluginController
         $file = $_FILES['plugin_zip'] ?? null;
         if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
             flash('err', 'Erro no upload.');
-            redirect('/plugins');
+            admin_redirect('/plugins');
         }
 
         $result = $this->extractAndRegister($file['tmp_name']);
         if ($result !== true) {
             flash('err', $result);
-            redirect('/plugins');
+            admin_redirect('/plugins');
         }
 
-        redirect('/plugins');
+        admin_redirect('/plugins');
     }
 
     // ── Instalação a partir do registry ─────────────────────────────
@@ -71,14 +71,14 @@ class PluginController
 
         if (!$pluginId || !$downloadUrl) {
             flash('err', 'Dados inválidos.');
-            redirect('/plugins');
+            admin_redirect('/plugins');
         }
 
         // Valida que a URL vem de github.com (segurança básica)
         $host = parse_url($downloadUrl, PHP_URL_HOST);
         if (!in_array($host, ['github.com', 'objects.githubusercontent.com', 'codeload.github.com'])) {
             flash('err', 'URL de download não permitida. Apenas repositórios GitHub são aceitos.');
-            redirect('/plugins');
+            admin_redirect('/plugins');
         }
 
         // Baixa o zip para um arquivo temporário
@@ -94,7 +94,7 @@ class PluginController
         $bytes = file_put_contents($tmpFile, file_get_contents($downloadUrl, false, $ctx));
         if (!$bytes) {
             flash('err', 'Não foi possível baixar o plugin. Verifique sua conexão.');
-            redirect('/plugins');
+            admin_redirect('/plugins');
         }
 
         $result = $this->extractAndRegister($tmpFile);
@@ -102,10 +102,10 @@ class PluginController
 
         if ($result !== true) {
             flash('err', $result);
-            redirect('/plugins');
+            admin_redirect('/plugins');
         }
 
-        redirect('/plugins');
+        admin_redirect('/plugins');
     }
 
     // ── Toggle ───────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ class PluginController
         $row = DB::one('SELECT active FROM plugins WHERE plugin_id = ?', [$slug]);
         DB::run('UPDATE plugins SET active = ? WHERE plugin_id = ?', [$row['active'] ? 0 : 1, $slug]);
         flash('ok', 'Status alterado.');
-        redirect('/plugins');
+        admin_redirect('/plugins');
     }
 
     // ── Settings ─────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ class PluginController
             [json_encode($_POST['settings'] ?? []), $slug]
         );
         flash('ok', 'Configurações salvas!');
-        redirect('/plugins');
+        admin_redirect('/plugins');
     }
 
     // ── Uninstall ────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ class PluginController
 
         DB::run('DELETE FROM plugins WHERE plugin_id = ?', [$slug]);
         flash('ok', 'Plugin removido.');
-        redirect('/plugins');
+        admin_redirect('/plugins');
     }
 
     // ── Helpers privados ─────────────────────────────────────────────

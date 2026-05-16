@@ -2,7 +2,7 @@
 $page_title  = 'Documentação da API';
 $active_page = 'api-docs';
 $breadcrumbs = [
-    ['label' => 'API & Chaves', 'url' => url('/api')],
+    ['label' => 'API & Chaves', 'url' => admin_url('/api')],
     ['label' => 'Documentação'],
 ];
 partial('layout/header');
@@ -188,7 +188,7 @@ Charset:  utf-8</div>
     <!-- AUTH -->
     <div class="doc-section" id="auth">
       <div class="doc-h1">🔑 Autenticação</div>
-      <p class="doc-p">Todas as requisições devem incluir o header <code>Authorization</code> com uma chave de API válida criada no painel em <a href="<?= url('/api') ?>" style="color:var(--ac)">API & Chaves</a>.</p>
+      <p class="doc-p">Todas as requisições devem incluir o header <code>Authorization</code> com uma chave de API válida criada no painel em <a href="<?= admin_url('/api') ?>" style="color:var(--ac)">API & Chaves</a>.</p>
 
       <div class="doc-h2">Header obrigatório</div>
       <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">📋</button>Authorization: Bearer fc_sua_chave_aqui</div>
@@ -201,7 +201,7 @@ Charset:  utf-8</div>
       <?php endforeach; ?>
       <?php else: ?>
       <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--r2);padding:12px 16px;font-size:.83rem;color:#fcd34d">
-        ⚠️ Nenhuma chave ativa. <a href="<?= url('/api') ?>" style="color:var(--ac)">Crie uma chave →</a>
+        ⚠️ Nenhuma chave ativa. <a href="<?= admin_url('/api') ?>" style="color:var(--ac)">Crie uma chave →</a>
       </div>
       <?php endif; ?>
     </div>
@@ -445,7 +445,7 @@ Hooks::filter('api.response', function(array $response, array $entity) {
             </span>
             <?php endforeach; ?>
           </div>
-          <a href="<?= url('/entities/'.$ent['id'].'/fields?tab=api') ?>" style="color:var(--ac);font-size:.78rem;margin-top:6px;display:inline-block">Editar respostas →</a>
+          <a href="<?= admin_url('/entities/'.$ent['id'].'/fields?tab=api') ?>" style="color:var(--ac);font-size:.78rem;margin-top:6px;display:inline-block">Editar respostas →</a>
         </div>
       </div>
       <?php endif; ?>
@@ -664,7 +664,7 @@ Authorization: Bearer fc_sua_chave</div>
         <div style="font-size:2.5rem;margin-bottom:14px">📋</div>
         <div style="font-weight:700;margin-bottom:8px">Nenhuma entidade criada ainda</div>
         <div style="color:var(--mt);margin-bottom:20px;font-size:.875rem">Crie entidades e campos no painel para gerar os endpoints automaticamente.</div>
-        <a href="<?= url('/entities/new') ?>" class="btn btn-primary" style="display:inline-flex">Criar primeira entidade</a>
+        <a href="<?= admin_url('/entities/new') ?>" class="btn btn-primary" style="display:inline-flex">Criar primeira entidade</a>
       </div>
     </div>
     <?php endif; ?>

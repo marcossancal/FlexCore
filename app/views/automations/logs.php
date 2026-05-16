@@ -2,7 +2,7 @@
 $page_title  = __('automations.page_title_logs') . ' — ' . h($automation['name']);
 $active_page = 'automations';
 $breadcrumbs = [
-  ['label' => __('automations.title'), 'url' => url('/automations')],
+  ['label' => __('automations.title'), 'url' => admin_url('/automations')],
   ['label' => h($automation['name'])],
   ['label' => __('automations.logs')],
 ];
@@ -14,7 +14,7 @@ partial('layout/header');
     <div class="sec-title">📋 <?= __('automations.logs') ?>: <?= h($automation['name']) ?></div>
     <div class="sec-sub"><?= number_format((int)$automation['run_count']) ?> <?= __('automations.runs') ?></div>
   </div>
-  <a href="<?= url('/automations') ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
+  <a href="<?= admin_url('/automations') ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
 </div>
 
 <div class="card" style="padding:0">

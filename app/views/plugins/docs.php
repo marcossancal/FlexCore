@@ -2,7 +2,7 @@
 $page_title  = 'Como criar Plugins';
 $active_page = 'plugins';
 $breadcrumbs = [
-    ['label' => 'Plugins', 'url' => url('/plugins')],
+    ['label' => 'Plugins', 'url' => admin_url('/plugins')],
     ['label' => 'Como criar'],
 ];
 partial('layout/header');
@@ -46,7 +46,7 @@ code         { background:var(--sf2);padding:1px 6px;border-radius:4px;font-size
     <div class="sec-sub">Guia completo para estender o FlexCore sem modificar o core</div>
   </div>
   <div class="sec-actions">
-    <a href="<?= url('/plugins') ?>" class="btn btn-ghost btn-sm">← Plugins</a>
+    <a href="<?= admin_url('/plugins') ?>" class="btn btn-ghost btn-sm">← Plugins</a>
   </div>
 </div>
 

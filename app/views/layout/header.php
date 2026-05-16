@@ -37,7 +37,7 @@ if ($isDark) {
 //     'id'       => string,          // identificador único (ex: 'home', 'psique')
 //     'section'  => string,          // label da seção (ex: 'Geral', 'Clínica')
 //     'label'    => string,          // texto do link
-//     'url'      => string,          // caminho (passado por url())
+//     'url'      => string,          // caminho (passado por admin_url())
 //     'icon'     => string,          // emoji ou HTML
 //     'active'   => string|string[], // active_page(s) que marcam o link como ativo
 //     'roles'    => string[],        // [] = todos; ['admin'] = só admin; etc.
@@ -372,7 +372,7 @@ foreach ($_navItems as $item) {
   <div class="sb-section">
     <div class="sb-label"><?= __('nav.entities_menu') ?></div>
     <?php foreach ($entities_menu as $em): ?>
-    <a href="<?= url('/e/' . h($em['slug'])) ?>"
+    <a href="<?= admin_url('/e/' . h($em['slug'])) ?>"
        class="sb-link <?= $_activeEntity === $em['slug'] ? 'active' : '' ?>"
        onclick="closeSidebar()">
       <span class="sb-ent-dot" style="background:<?= h($em['color']) ?>"></span>
@@ -389,7 +389,7 @@ foreach ($_navItems as $item) {
   <div class="sb-section">
     <div class="sb-label"><?= h($sectionLabel) ?></div>
     <?php foreach ($items as $item): ?>
-    <a href="<?= url($item['url']) ?>"
+    <a href="<?= admin_url($item['url']) ?>"
        class="sb-link <?= $_isActive($item) ? 'active' : '' ?>"
        onclick="closeSidebar()">
       <span class="ico"><?= $item['icon'] ?></span>
@@ -410,7 +410,7 @@ foreach ($_navItems as $item) {
         <div class="sb-user-role"><?= h(Auth::user()['role'] ?? '') ?></div>
       </div>
     </div>
-    <a href="<?= url('logout') ?>" class="sb-link" style="margin-top:4px">
+    <a href="<?= admin_url('logout') ?>" class="sb-link" style="margin-top:4px">
       <span class="ico">🚪</span> <?= __('nav.logout') ?>
     </a>
   </div>

@@ -28,7 +28,7 @@
 <?php if ($tab === 'geral'): ?>
 <div class="card">
   <div class="card-title"><?= __('settings.system_data') ?></div>
-  <form method="POST" action="<?= url('settings');?>">
+  <form method="POST" action="<?= admin_url('settings');?>">
     <input type="hidden" name="tab" value="geral">
     <div class="row2">
       <div class="field"><label><?= __('settings.app_name') ?></label>
@@ -67,7 +67,7 @@ $curMode   = DB::setting('theme_mode','dark');
 $curAc     = DB::setting('color_accent','');
 $curAc2    = DB::setting('color_accent2','');
 ?>
-<form method="POST" action="<?= url('settings') ?>">
+<form method="POST" action="<?= admin_url('settings') ?>">
   <input type="hidden" name="tab" value="tema">
 
   <div class="card" style="margin-bottom:14px">
@@ -206,7 +206,7 @@ function clearColor(inputId, txtId, name) {
               <?php if ($u['id'] !== Auth::id()): ?>
               <div class="td-actions">
                 <button type="button" onclick="editarUsuario(<?= h(json_encode($u)) ?>)" class="btn btn-ghost btn-xs"><?= __('general.edit') ?></button>
-                <form method="POST" action="<?= url('users/'. $u['id'].'/delete');?>" style="display:inline"
+                <form method="POST" action="<?= admin_url('users/'. $u['id'].'/delete');?>" style="display:inline"
                       onsubmit="return confirm('<?= __('users.delete_confirm') ?>')">
                   <button type="submit" class="btn btn-danger btn-xs"><?= __('general.delete') ?></button>
                 </form>
@@ -224,7 +224,7 @@ function clearColor(inputId, txtId, name) {
   <div>
     <div class="card" id="user-form-card">
       <div class="card-title" id="user-form-title">👤 <?= __('users.new') ?></div>
-      <form method="POST" id="user-form" action="<?= url('users/create');?>">
+      <form method="POST" id="user-form" action="<?= admin_url('users/create');?>">
         <input type="hidden" name="user_id" id="usr-id" value="">
         <div class="field"><label><?= __('users.name') ?> *</label>
           <input type="text" name="name" id="usr-name" required></div>
@@ -252,7 +252,7 @@ function clearColor(inputId, txtId, name) {
 <?php $langs = availableLanguages(); $curLang = DB::setting('app_lang','pt_BR'); ?>
 <div class="card">
   <div class="card-title">🌐 <?= __('settings.tab_lang') ?></div>
-  <form method="POST" action="<?= url('settings') ?>">
+  <form method="POST" action="<?= admin_url('settings') ?>">
     <input type="hidden" name="tab" value="lang">
     <div class="field">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:8px">
@@ -277,7 +277,7 @@ function clearColor(inputId, txtId, name) {
 <script>
 function editarUsuario(u) {
   document.getElementById('user-form-title').textContent = '✏️ <?= __('users.edit') ?>';
-  document.getElementById('user-form').action = '<?= url('/users/') ?>' + u.id + '/update';
+  document.getElementById('user-form').action = '<?= admin_url('/users/') ?>' + u.id + '/update';
   document.getElementById('usr-id').value   = u.id;
   document.getElementById('usr-name').value = u.name;
   document.getElementById('usr-email').value = u.email;
@@ -289,7 +289,7 @@ function editarUsuario(u) {
 }
 function resetUserForm() {
   document.getElementById('user-form-title').textContent = '👤 <?= __('users.new') ?>';
-  document.getElementById('user-form').action = '<?= url('/users/create') ?>';
+  document.getElementById('user-form').action = '<?= admin_url('/users/create') ?>';
   document.getElementById('user-form').reset();
   document.getElementById('usr-id').value = '';
   document.getElementById('usr-pwd').required = true;

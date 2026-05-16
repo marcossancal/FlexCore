@@ -96,6 +96,28 @@ function redirect(string $path): void {
     exit;
 }
 
+/**
+ * Generates a URL inside the admin panel (BASE_PATH + ADMIN_PATH + path).
+ *
+ * Use this in all admin controllers and views instead of url() so URLs
+ * remain correct regardless of what ADMIN_PATH is set to.
+ *
+ * Example (ADMIN_PATH=/painel):
+ *   admin_url('login')     -> /FlexCore/painel/login
+ *   admin_url('entities')  -> /FlexCore/painel/entities
+ */
+function admin_url(string $path = ''): string {
+    return BASE_PATH . ADMIN_PATH . '/' . ltrim($path, '/');
+}
+
+/**
+ * Redirects to a path inside the admin panel and exits.
+ */
+function admin_redirect(string $path): void {
+    header('Location: ' . admin_url($path));
+    exit;
+}
+
 function flash(string $type, string $msg): void { $_SESSION['flash'] = compact('type','msg'); }
 function getFlash(): ?array { $f=$_SESSION['flash']??null; unset($_SESSION['flash']); return $f; }
 function view(string $tpl, array $data = []): void {

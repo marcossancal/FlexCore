@@ -15,14 +15,14 @@
     <?= __('entities.next_step_desc') ?>
   </div>
   <?php if (Auth::user()['role']==='admin'): ?>
-  <a href="<?= url('/entities/new') ?>" class="btn btn-primary">⚙️ <?= __('dashboard.create_first') ?></a>
+  <a href="<?= admin_url('/entities/new') ?>" class="btn btn-primary">⚙️ <?= __('dashboard.create_first') ?></a>
   <?php endif; ?>
 </div>
 <?php else: ?>
 
 <div class="stats">
   <?php foreach ($entities as $ent): ?>
-  <a href="<?= url('/e/' . h($ent['slug'])) ?>" style="text-decoration:none">
+  <a href="<?= admin_url('/e/' . h($ent['slug'])) ?>" style="text-decoration:none">
     <div class="stat" style="border-color: color-mix(in srgb, <?= h($ent['color']) ?> 25%, var(--bd));cursor:pointer;transition:all .18s"
          onmouseenter="this.style.borderColor='<?= h($ent['color']) ?>'" onmouseleave="this.style.borderColor=''">
       <div class="stat-ico"><?= h($ent['icon']) ?></div>
@@ -38,7 +38,7 @@
   <div class="card">
     <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
       <span><?= h($ent['icon']) ?> <?= h($ent['name']) ?></span>
-      <a href="<?= url('/e/' . h($ent['slug'])) ?>" class="btn btn-ghost btn-xs"><?= __('dashboard.view_all') ?></a>
+      <a href="<?= admin_url('/e/' . h($ent['slug'])) ?>" class="btn btn-ghost btn-xs"><?= __('dashboard.view_all') ?></a>
     </div>
     <?php if (empty($ent['recents'])): ?>
     <p style="color:var(--mt);font-size:.85rem">—</p>
@@ -48,7 +48,7 @@
         <tbody>
         <?php foreach ($ent['recents'] as $rec): ?>
         <tr>
-          <td><a href="<?= url('/e/' . h($ent['slug']) . '/' . $rec['id']) ?>"><?= h($rec['label'] ?? '#'.$rec['id']) ?></a></td>
+          <td><a href="<?= admin_url('/e/' . h($ent['slug']) . '/' . $rec['id']) ?>"><?= h($rec['label'] ?? '#'.$rec['id']) ?></a></td>
           <td style="font-size:.78rem;color:var(--mt);text-align:right"><?= dateBr($rec['created_at']) ?></td>
         </tr>
         <?php endforeach; ?>

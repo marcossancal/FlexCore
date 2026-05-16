@@ -11,7 +11,7 @@ partial('layout/header');
     <div class="sec-sub"><?= __('api.how_to_use') ?></div>
   </div>
   <div class="sec-actions">
-    <a href="<?= url('/api/docs') ?>" class="btn btn-ghost btn-sm">📄 <?= __('nav.api_docs') ?></a>
+    <a href="<?= admin_url('/api/docs') ?>" class="btn btn-ghost btn-sm">📄 <?= __('nav.api_docs') ?></a>
     <button class="btn btn-primary" onclick="openCreate()"><?= __('api.new_key') ?></button>
   </div>
 </div>
@@ -63,10 +63,10 @@ partial('layout/header');
           <td>
             <div class="td-actions">
               <button class="btn btn-ghost btn-xs" onclick='openEdit(<?= json_encode($k) ?>)'>✏️</button>
-              <form method="POST" action="<?= url('/api/keys/'.$k['id'].'/toggle') ?>" style="display:inline">
+              <form method="POST" action="<?= admin_url('/api/keys/'.$k['id'].'/toggle') ?>" style="display:inline">
                 <button class="btn btn-ghost btn-xs"><?= $k['active'] ? '⏸' : '▶️' ?></button>
               </form>
-              <form method="POST" action="<?= url('/api/keys/'.$k['id'].'/delete') ?>" style="display:inline"
+              <form method="POST" action="<?= admin_url('/api/keys/'.$k['id'].'/delete') ?>" style="display:inline"
                     onsubmit="return confirm('<?= __('api.revoke_confirm') ?>')">
                 <button class="btn btn-danger btn-xs">🗑</button>
               </form>
@@ -137,7 +137,7 @@ partial('layout/header');
 const OV = document.getElementById('modal-overlay');
 function openCreate() {
   document.getElementById('modal-title').textContent = '<?= __('api.new_key') ?>';
-  document.getElementById('modal-form').action = '<?= url('/api/keys/create') ?>';
+  document.getElementById('modal-form').action = '<?= admin_url('/api/keys/create') ?>';
   document.getElementById('modal-btn').textContent = '<?= __('api.new_key') ?>';
   document.getElementById('key-reveal').style.display = 'none';
   ['f-name','f-rate','f-expires'].forEach(id => document.getElementById(id).value = id==='f-rate'?'60':'');
@@ -146,7 +146,7 @@ function openCreate() {
 }
 function openEdit(k) {
   document.getElementById('modal-title').textContent = '<?= __('general.edit') ?>';
-  document.getElementById('modal-form').action = '<?= url('/api/keys/') ?>'+k.id+'/update';
+  document.getElementById('modal-form').action = '<?= admin_url('/api/keys/') ?>'+k.id+'/update';
   document.getElementById('modal-btn').textContent = '<?= __('general.save') ?>';
   document.getElementById('key-reveal').style.display = 'none';
   document.getElementById('f-name').value = k.name;

@@ -74,7 +74,16 @@ class_alias(\FlexCore\Lib\Auth::class, 'Auth');
 require_once BASE_BS . '/lib/helpers.php';
 
 // ── BASE_PATH (used por url(), redirect(), Router) ───────────────────
-define('BASE_PATH', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'));
+define('BASE_PATH', rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/'));
+
+// ── ADMIN_PATH ────────────────────────────────────────────────────────
+// Single path segment that prefixes every admin route (login, entities, etc.).
+// Configured by the user at install time via the installer form and stored in .env.
+// Default: 'painel'  →  /FlexCore/painel/login
+//
+// Plugins and front-end code are NOT affected — they own the app root freely.
+// Read ADMIN_PATH from .env (already loaded above). Falls back to 'painel'.
+define('ADMIN_PATH', '/' . trim($_ENV['ADMIN_PATH'] ?? 'painel', '/'));
 
 // ── DI Container ───────────────────────────────────────────────────
 $container = require_once BASE_BS . '/config/container.php';
@@ -92,7 +101,8 @@ if (file_exists(BASE_BS . '/.installed')) {
             BASE . '/plugins',
             $appVersion
         );
-        $pluginLoader->loadAll($activePluginIds);
+        $pluginLoader->loadAll($activePluginIds ?: ['__none__']);
+
 
     } catch (\Throwable $e) {
         error_log('FlexCore: PluginLoader boot falhou: ' . $e->getMessage());

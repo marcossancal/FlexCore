@@ -38,7 +38,7 @@ class ApiKeyController
     {
         Auth::require(['admin']);
         $name = trim(post('name'));
-        if (!$name) { flash('err', 'Nome obrigatório.'); redirect('/api'); }
+        if (!$name) { flash('err', 'Nome obrigatório.'); admin_redirect('/api'); }
 
         $scope = post('scope', 'all');
         $perms = $scope === 'all'
@@ -57,7 +57,7 @@ class ApiKeyController
 
         $_SESSION['_new_api_key'] = $rawKey;
         flash('ok', "Chave \"{$name}\" criada!");
-        redirect('/api');
+        admin_redirect('/api');
     }
 
     public function update(int $id): void
@@ -72,7 +72,7 @@ class ApiKeyController
             [trim(post('name')), json_encode($perms), (int) post('rate_limit', 60), $expires, $id]
         );
         flash('ok', 'Chave atualizada!');
-        redirect('/api');
+        admin_redirect('/api');
     }
 
     public function toggle(int $id): void
@@ -81,7 +81,7 @@ class ApiKeyController
         $row = DB::one('SELECT active FROM api_keys WHERE id = ?', [$id]);
         DB::run('UPDATE api_keys SET active = ? WHERE id = ?', [$row['active'] ? 0 : 1, $id]);
         flash('ok', 'Status alterado.');
-        redirect('/api');
+        admin_redirect('/api');
     }
 
     public function destroy(int $id): void
@@ -89,6 +89,6 @@ class ApiKeyController
         Auth::require(['admin']);
         DB::run('DELETE FROM api_keys WHERE id = ?', [$id]);
         flash('ok', 'Chave revogada.');
-        redirect('/api');
+        admin_redirect('/api');
     }
 }

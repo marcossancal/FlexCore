@@ -117,7 +117,7 @@ class RecordController
             }
         }
         $path = '/e/' . $slug . (count($qs) ? '?' . implode('&', $qs) : '');
-        redirect($path);
+        admin_redirect($path);
     }
 
     // ── New form ─────────────────────────────────────────────────────
@@ -142,12 +142,12 @@ class RecordController
             $recId = $this->service()->create($entity['id'], $input, Auth::id());
         } catch (\DomainException $e) {
             flash('error', $e->getMessage());
-            redirect("/e/{$slug}/new");
+            admin_redirect("/e/{$slug}/new");
             return;
         }
 
         flash('ok', 'Registro criado!');
-        redirect("/e/{$slug}/{$recId}");
+        admin_redirect("/e/{$slug}/{$recId}");
     }
 
     // ── Show ─────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ class RecordController
         $this->service()->update($id, $entity['id'], $input);
 
         flash('ok', 'Registro salvo!');
-        redirect("/e/{$slug}/{$id}");
+        admin_redirect("/e/{$slug}/{$id}");
     }
 
     // ── Delete ───────────────────────────────────────────────────────
@@ -206,7 +206,7 @@ class RecordController
         $this->service()->delete($id, $entity['id']);
 
         flash('ok', 'Registro excluído.');
-        redirect("/e/{$slug}");
+        admin_redirect("/e/{$slug}");
     }
 
     // ── Permission guard ─────────────────────────────────────────────

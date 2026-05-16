@@ -66,7 +66,7 @@ $accent  = DB::setting('color_accent', '#4f7ef8');
     <?php if ($error): ?>
     <div class="error">❌ <?= h($error) ?></div>
     <?php endif; ?>
-    <form method="POST" action="<?= url('login'); ?>">
+    <form method="POST" action="<?= admin_url('login'); ?>">
       <div class="field">
         <label><?= __('auth.email') ?></label>
         <input type="email" name="email" autofocus required placeholder="<?= __('auth.email_placeholder') ?>">

@@ -29,7 +29,7 @@
     <div class="sec-title">⚙️ <?= __('entities.title') ?></div>
     <div class="sec-sub"><?= __('entities.next_step_desc') ?></div>
   </div>
-  <a href="<?= url('/entities/new') ?>" class="btn btn-primary"> <?= __('entities.new') ?></a>
+  <a href="<?= admin_url('/entities/new') ?>" class="btn btn-primary"> <?= __('entities.new') ?></a>
 </div>
 
 <?php if (empty($entities)): ?>
@@ -37,7 +37,7 @@
   <div style="font-size:2.5rem;margin-bottom:12px">🧩</div>
   <div style="font-family:var(--fd);font-size:1.1rem;font-weight:700;margin-bottom:8px"><?= __('entities.no_entities') ?></div>
   <div style="color:var(--mt);margin-bottom:24px"><?= __('entities.next_step_desc') ?></div>
-  <a href="<?= url('/entities/new') ?>" class="btn btn-primary"> <?= __('entities.create_first') ?></a>
+  <a href="<?= admin_url('/entities/new') ?>" class="btn btn-primary"> <?= __('entities.create_first') ?></a>
 </div>
 <?php else: ?>
 
@@ -45,7 +45,7 @@
 <div class="bulk-bar" id="bulkBar">
   <span><span class="bulk-count" id="bulkCount">0</span> entidade(s) selecionada(s)</span>
   <span class="spacer"></span>
-  <form method="POST" action="<?= url('/entities/bulk-delete') ?>" id="bulkDeleteForm">
+  <form method="POST" action="<?= admin_url('/entities/bulk-delete') ?>" id="bulkDeleteForm">
     <input type="hidden" name="ids" id="bulkIds">
     <button type="button" class="btn btn-danger btn-sm" onclick="confirmBulkDelete()">
       🗑 Excluir selecionadas
@@ -95,11 +95,11 @@
         <td style="text-align:center;color:var(--mt)"><?= $ent['position'] ?></td>
         <td>
           <div class="td-actions">
-            <a href="<?= url('/e/' . h($ent['slug'])) ?>" class="btn btn-ghost btn-xs">👁 <?= __('records.view') ?></a>
-            <a href="<?= url('/entities/' . $ent['id'] . '/edit') ?>" class="btn btn-ghost btn-xs">✏️ <?= __('general.edit') ?></a>
-            <a href="<?= url('/entities/' . $ent['id'] . '/fields') ?>" class="btn btn-ghost btn-xs">🔧 <?= __('entities.fields') ?></a>
-            <a href="<?= url('/entities/' . $ent['id'] . '/edit?tab=api') ?>" class="btn btn-ghost btn-xs">📡 API</a>
-            <form method="POST" action="<?= url('entities/'. $ent['id'] .'/delete');?>" style="display:inline"
+            <a href="<?= admin_url('/e/' . h($ent['slug'])) ?>" class="btn btn-ghost btn-xs">👁 <?= __('records.view') ?></a>
+            <a href="<?= admin_url('/entities/' . $ent['id'] . '/edit') ?>" class="btn btn-ghost btn-xs">✏️ <?= __('general.edit') ?></a>
+            <a href="<?= admin_url('/entities/' . $ent['id'] . '/fields') ?>" class="btn btn-ghost btn-xs">🔧 <?= __('entities.fields') ?></a>
+            <a href="<?= admin_url('/entities/' . $ent['id'] . '/edit?tab=api') ?>" class="btn btn-ghost btn-xs">📡 API</a>
+            <form method="POST" action="<?= admin_url('entities/'. $ent['id'] .'/delete');?>" style="display:inline"
                   onsubmit="return confirm('<?= __('entities.delete_confirm') ?>')">
               <button type="submit" class="btn btn-danger btn-xs"><?= __('general.delete') ?></button>
             </form>

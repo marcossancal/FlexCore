@@ -13,8 +13,8 @@
     <div class="sec-sub"><?= __('general.created_at') ?>: <?= dateBr($record['created_at']) ?></div>
   </div>
   <div class="sec-actions">
-    <a href="<?= url('/e/' . h($entity['slug']) . '/' . $record['id'] . '/edit') ?>" class="btn btn-ghost btn-sm">✏️ <?= __('general.edit') ?></a>
-    <a href="<?= url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
+    <a href="<?= admin_url('/e/' . h($entity['slug']) . '/' . $record['id'] . '/edit') ?>" class="btn btn-ghost btn-sm">✏️ <?= __('general.edit') ?></a>
+    <a href="<?= admin_url('/e/' . h($entity['slug'])) ?>" class="btn btn-ghost btn-sm">← <?= __('general.back') ?></a>
   </div>
 </div>
 
@@ -52,8 +52,8 @@
     <div class="card">
       <div class="card-title" style="font-size:.82rem"><?= __('general.actions') ?></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <a href="<?= url('/e/' . h($entity['slug']) . '/' . $record['id'] . '/edit') ?>" class="btn btn-ghost" style="justify-content:center">✏️ <?= __('records.edit') ?></a>
-        <form method="POST" action="<?= url('e/'. h($entity['slug']).'/'.$record['id'].'/delete');?>"
+        <a href="<?= admin_url('/e/' . h($entity['slug']) . '/' . $record['id'] . '/edit') ?>" class="btn btn-ghost" style="justify-content:center">✏️ <?= __('records.edit') ?></a>
+        <form method="POST" action="<?= admin_url('e/'. h($entity['slug']).'/'.$record['id'].'/delete');?>"
               onsubmit="return confirm('<?= __('records.delete_confirm') ?>')">
           <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center">🗑️ <?= __('general.delete') ?></button>
         </form>

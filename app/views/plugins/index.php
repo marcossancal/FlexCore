@@ -14,7 +14,7 @@ $installedIds = array_column($plugins, 'plugin_id');
     <div class="sec-sub">Gerencie e descubra plugins para o FlexCore</div>
   </div>
   <div class="sec-actions">
-    <a href="<?= url('/plugins/docs') ?>" class="btn btn-ghost btn-sm"><?= __('plugins.how_to_create') ?></a>
+    <a href="<?= admin_url('/plugins/docs') ?>" class="btn btn-ghost btn-sm"><?= __('plugins.how_to_create') ?></a>
     <button class="btn btn-primary" onclick="openUploadModal()">⬆️ <?= __('plugins.install') ?> via ZIP</button>
   </div>
 </div>
@@ -82,10 +82,10 @@ $installedIds = array_column($plugins, 'plugin_id');
         <?php if (!empty($manifest['settings'])): ?>
         <button class="btn btn-ghost btn-sm" onclick='openSettings(<?= json_encode($p) ?>)'><?= __('plugins.configure') ?></button>
         <?php endif; ?>
-        <form method="POST" action="<?= url('/plugins/'.$p['plugin_id'].'/toggle') ?>" style="display:inline">
+        <form method="POST" action="<?= admin_url('/plugins/'.$p['plugin_id'].'/toggle') ?>" style="display:inline">
           <button class="btn btn-ghost btn-sm"><?= $p['active'] ? '⏸ '.__('general.disable') : '▶️ '.__('general.enable') ?></button>
         </form>
-        <form method="POST" action="<?= url('/plugins/'.$p['plugin_id'].'/uninstall') ?>" style="display:inline;margin-left:auto"
+        <form method="POST" action="<?= admin_url('/plugins/'.$p['plugin_id'].'/uninstall') ?>" style="display:inline;margin-left:auto"
               onsubmit="return confirm('<?= __('plugins.uninstall_confirm') ?>')">
           <button class="btn btn-danger btn-sm"><?= __('plugins.uninstall') ?></button>
         </form>
@@ -178,7 +178,7 @@ $installedIds = array_column($plugins, 'plugin_id');
         <?php if ($isInstalled): ?>
         <button class="btn btn-ghost btn-sm" disabled style="opacity:.5;cursor:not-allowed;margin-left:auto">✓ Instalado</button>
         <?php else: ?>
-        <form method="POST" action="<?= url('/plugins/install-from-registry') ?>" style="margin-left:auto">
+        <form method="POST" action="<?= admin_url('/plugins/install-from-registry') ?>" style="margin-left:auto">
           <input type="hidden" name="plugin_id"    value="<?= h($rp['id']) ?>">
           <input type="hidden" name="download_url" value="<?= h($rp['download_url'] ?? '') ?>">
           <button type="submit" class="btn btn-primary btn-sm"
@@ -225,7 +225,7 @@ $installedIds = array_column($plugins, 'plugin_id');
       O ZIP deve conter um <code style="background:var(--sf2);padding:1px 5px;border-radius:3px">plugin.json</code>
       e um <code style="background:var(--sf2);padding:1px 5px;border-radius:3px">Plugin.php</code> na raiz.
     </p>
-    <form method="POST" action="<?= url('/plugins/install') ?>" enctype="multipart/form-data">
+    <form method="POST" action="<?= admin_url('/plugins/install') ?>" enctype="multipart/form-data">
       <div class="field">
         <label>Arquivo do plugin (.zip) *</label>
         <input type="file" name="plugin_zip" accept=".zip" required
@@ -309,7 +309,7 @@ function openSettings(p) {
   const settings = JSON.parse(p.settings || '{}');
   const schema   = manifest.settings || [];
   document.getElementById('cfg-title').textContent = p.name + ' — <?= __('plugins.configure') ?>';
-  document.getElementById('cfg-form').action = '<?= url('/plugins/') ?>' + p.plugin_id + '/settings';
+  document.getElementById('cfg-form').action = '<?= admin_url('/plugins/') ?>' + p.plugin_id + '/settings';
   const inp = s => s.type === 'textarea'
     ? `<textarea name="settings[${s.key}]" rows="3">${settings[s.key] || ''}</textarea>`
     : `<input type="${s.type || 'text'}" name="settings[${s.key}]" value="${settings[s.key] || ''}" ${s.required ? 'required' : ''}>`;
