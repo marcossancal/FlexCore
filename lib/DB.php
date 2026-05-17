@@ -66,14 +66,32 @@ class DB
         return $st->rowCount();
     }
 
+    /** Cache estático da tabela settings — válido durante o request. */
+    private static ?array $settingsCache = null;
+
+    /**
+     * Retorna o valor de uma configuração global.
+     * Na primeira chamada carrega a tabela settings inteira em memória
+     * (1 query por request), as demais servem do array — zero roundtrips adicionais.
+     */
     public static function setting(string $key, mixed $default = ''): string
     {
-        $r = self::one('SELECT sval FROM settings WHERE skey = ?', [$key]);
-        return $r ? (string) $r['sval'] : (string) $default;
+        if (self::$settingsCache === null) {
+            $rows = self::q('SELECT skey, sval FROM settings');
+            self::$settingsCache = [];
+            foreach ($rows as $row) {
+                self::$settingsCache[$row['skey']] = $row['sval'];
+            }
+        }
+        return isset(self::$settingsCache[$key])
+            ? (string) self::$settingsCache[$key]
+            : (string) $default;
     }
 
     public static function setSetting(string $key, string $val, string $label = '', string $grp = 'geral'): void
     {
+        // Invalida o cache para que a próxima leitura pegue o valor novo.
+        self::$settingsCache = null;
         self::run(
             'INSERT INTO settings (skey,sval,label,grp) VALUES (?,?,?,?)
              ON DUPLICATE KEY UPDATE sval=VALUES(sval)',
