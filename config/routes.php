@@ -17,6 +17,7 @@ use FlexCore\App\Controllers\SettingsController;
 use FlexCore\App\Controllers\ApiKeyController;
 use FlexCore\App\Controllers\AutomationController;
 use FlexCore\App\Controllers\PluginController;
+use FlexCore\App\Controllers\AuditController;
 use FlexCore\Api\Controllers\ApiRecordController;
 use FlexCore\Api\Middleware\ApiAuthMiddleware;
 
@@ -115,6 +116,11 @@ $router->put(   '/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'updat
 
 $router->delete('/api/v1/e/{slug}/{id}',     [ApiRecordController::class, 'destroy'])
        ->middleware(new ApiAuthMiddleware());
+
+// ── Audit ──────────────────────────────────────────────────────────────
+$router->get( "$_ap/audit",              [AuditController::class, 'index']);
+$router->get( "$_ap/audit/{id}",        [AuditController::class, 'show']);
+$router->post("$_ap/audit/{id}/revert", [AuditController::class, 'revert']);
 
 // ── Active plugin routes ──────────────────────────────────────────────
 // Plugins register their routes through the 'router.register' hook in boot().

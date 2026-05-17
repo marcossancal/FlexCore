@@ -125,14 +125,19 @@ CREATE TABLE IF NOT EXISTS record_values (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS audit_log (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT DEFAULT NULL,
-  action      VARCHAR(40),
-  entity_id   INT DEFAULT NULL,
-  record_id   INT DEFAULT NULL,
-  description TEXT,
-  ip          VARCHAR(45),
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT DEFAULT NULL,
+  action       VARCHAR(40),
+  entity_id    INT DEFAULT NULL,
+  record_id    INT DEFAULT NULL,
+  description  TEXT,
+  before_json  MEDIUMTEXT DEFAULT NULL,
+  after_json   MEDIUMTEXT DEFAULT NULL,
+  reverted_by  INT DEFAULT NULL,
+  reverted_at  DATETIME DEFAULT NULL,
+  revert_of    INT DEFAULT NULL,
+  ip           VARCHAR(45),
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO settings (skey, sval, label, grp) VALUES

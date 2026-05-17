@@ -5,22 +5,9 @@ declare(strict_types=1);
 namespace FlexCore\App\Controllers;
 use Auth;
 use DB;
+
 /**
  * EntityController — SRP: gerencia entidades e seus campos.
- *
- * Rotas cobertas:
- *   GET  /entities
- *   GET  /entities/new
- *   POST /entities/create
- *   GET  /entities/{id}/edit
- *   POST /entities/{id}/update
- *   POST /entities/{id}/delete
- *   POST /entities/{id}/api-responses
- *   POST /entities/{id}/permissions
- *   GET  /entities/{id}/fields
- *   POST /entities/{id}/fields/create
- *   POST /entities/{id}/fields/{fid}/update
- *   POST /entities/{id}/fields/{fid}/delete
  */
 class EntityController
 {
@@ -62,7 +49,9 @@ class EntityController
              post('description'), (int) post('position', 0), (int) post('active', 1), Auth::id()]
         );
 
-        audit('create_entity', $id, null, "Entidade '{$name}' criada");
+        $after = DB::one('SELECT * FROM entities WHERE id = ?', [$id]) ?: [];
+        audit('create_entity', $id, null, "Entidade '{$name}' criada", [], $after);
+
         flash('ok', "Entidade '{$name}' criada! Agora configure os campos.");
         admin_redirect("/entities/{$id}/fields");
     }
@@ -78,6 +67,9 @@ class EntityController
     public function update(int $id): void
     {
         Auth::require(['admin']);
+
+        $before = DB::one('SELECT * FROM entities WHERE id = ?', [$id]) ?: [];
+
         DB::run(
             'UPDATE entities
                 SET name = ?, slug = ?, icon = ?, color = ?, description = ?,
@@ -87,7 +79,10 @@ class EntityController
              post('icon', '📋'), post('color', '#00d4ff'), post('description'),
              (int) post('position', 0), (int) post('active', 1), $id]
         );
-        audit('update_entity', $id, null, 'Entidade atualizada');
+
+        $after = DB::one('SELECT * FROM entities WHERE id = ?', [$id]) ?: [];
+        audit('update_entity', $id, null, 'Entidade atualizada', $before, $after);
+
         flash('ok', 'Entidade atualizada!');
         admin_redirect('/entities');
     }
@@ -95,9 +90,17 @@ class EntityController
     public function destroy(int $id): void
     {
         Auth::require(['admin']);
-        $ent = DB::one('SELECT name FROM entities WHERE id = ?', [$id]);
+
+        $ent    = DB::one('SELECT * FROM entities WHERE id = ?', [$id]);
+        $fields = DB::q('SELECT * FROM entity_fields WHERE entity_id = ? ORDER BY position ASC', [$id]);
+
+        // Snapshot completo: entidade + campos (necessário para restaurar)
+        $before = ['entity' => $ent ?: [], 'fields' => $fields ?: []];
+
         DB::run('DELETE FROM entities WHERE id = ?', [$id]);
-        audit('delete_entity', $id, null, "Entidade '{$ent['name']}' excluída");
+
+        audit('delete_entity', $id, null, "Entidade '{$ent['name']}' excluída", $before, []);
+
         flash('ok', "Entidade '{$ent['name']}' excluída.");
         admin_redirect('/entities');
     }
@@ -106,24 +109,21 @@ class EntityController
     {
         Auth::require(['admin']);
         $raw = trim(post('ids', ''));
-        if (!$raw) {
-            flash('err', 'Nenhuma entidade selecionada.');
-            admin_redirect('/entities');
-        }
+        if (!$raw) { flash('err', 'Nenhuma entidade selecionada.'); admin_redirect('/entities'); }
 
-        // Sanitiza: aceita apenas inteiros separados por vírgula
         $ids = array_filter(array_map('intval', explode(',', $raw)));
-        if (empty($ids)) {
-            flash('err', 'Seleção inválida.');
-            admin_redirect('/entities');
-        }
+        if (empty($ids)) { flash('err', 'Seleção inválida.'); admin_redirect('/entities'); }
 
         $count = 0;
         foreach ($ids as $id) {
-            $ent = DB::one('SELECT name FROM entities WHERE id = ?', [$id]);
+            $ent    = DB::one('SELECT * FROM entities WHERE id = ?', [$id]);
             if (!$ent) continue;
+            $fields = DB::q('SELECT * FROM entity_fields WHERE entity_id = ? ORDER BY position ASC', [$id]);
+
+            $before = ['entity' => (array)$ent, 'fields' => $fields ?: []];
+
             DB::run('DELETE FROM entities WHERE id = ?', [$id]);
-            audit('delete_entity', $id, null, "Entidade '{$ent['name']}' excluída em lote");
+            audit('delete_entity', $id, null, "Entidade '{$ent['name']}' excluída em lote", $before, []);
             $count++;
         }
 
@@ -160,11 +160,14 @@ class EntityController
             ];
         }
 
+        $before = DB::one('SELECT * FROM entities WHERE id = ?', [$id]) ?: [];
         DB::run(
             'UPDATE entities SET api_responses = ?, updated_at = NOW() WHERE id = ?',
             [json_encode($clean, JSON_UNESCAPED_UNICODE), $id]
         );
-        audit('update_entity', $id, null, "Respostas API da entidade #{$id} atualizadas");
+        $after = DB::one('SELECT * FROM entities WHERE id = ?', [$id]) ?: [];
+        audit('update_entity', $id, null, "Respostas API da entidade #{$id} atualizadas", $before, $after);
+
         flash('ok', 'Respostas de API salvas!');
         admin_redirect("/entities/{$id}/edit?tab=api");
     }
@@ -246,11 +249,6 @@ class EntityController
 
     // ── Permissions ──────────────────────────────────────────────────
 
-    /**
-     * Salva as permissões granulares por papel para uma entidade.
-     * Recebe POST com campos no padrão: can_create_{role}, can_edit_{role}, can_delete_{role}.
-     * Usa UPSERT para não exigir configuração prévia de cada papel.
-     */
     public function savePermissions(int $id): void
     {
         Auth::require(['admin']);
@@ -302,22 +300,11 @@ class EntityController
             return json_encode(['max_size_mb' => $maxMb]);
         }
 
-        // -- Hook: field.options_build --
-        // Plugins serializam as opcoes dos seus tipos de campo para options_json.
-        // Recebe null (valor inicial) e o fieldType. Retorna string JSON ou null.
-        //
-        // Exemplo:
-        //   Hooks::filter('field.options_build', function(?string $json, array $ctx): ?string {
-        //       if ($ctx['field_type'] !== 'meu_tipo') return $json;
-        //       return json_encode(['minha_config' => $_POST['minha_config'] ?? '']);
-        //   });
         $pluginOptions = \FlexCore\Core\Hooks\Hooks::applyFilter('field.options_build', null, [
             'field_type' => $fieldType,
             'post'       => $_POST,
         ]);
-        if ($pluginOptions !== null) {
-            return $pluginOptions;
-        }
+        if ($pluginOptions !== null) return $pluginOptions;
 
         return null;
     }

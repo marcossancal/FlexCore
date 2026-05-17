@@ -198,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
 
-        header('Location: /login');
+        header('Location: ' . installUrl($adminPath . '/login'));
     }
 
     $step = 2; // re-render form with errors

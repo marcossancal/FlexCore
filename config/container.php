@@ -21,6 +21,7 @@ use FlexCore\App\Repositories\EntityRepository;
 use FlexCore\App\Repositories\AutomationRepository;
 use FlexCore\App\Services\RecordService;
 use FlexCore\App\Services\AuditService;
+use FlexCore\App\Controllers\AuditController;
 use FlexCore\Modules\Automations\AutomationEngine;
 use FlexCore\Modules\Automations\Actions\WebhookAction;
 use FlexCore\Modules\Plugins\PluginLoader;

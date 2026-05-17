@@ -573,7 +573,39 @@ function formulaResolveFunctions(string $expr, array $fieldValues): string
     return $expr;
 }
 
-function audit(string $action, ?int $entityId, ?int $recordId, string $desc): void {
-    DB::exec('INSERT INTO audit_log (user_id,action,entity_id,record_id,description,ip) VALUES (?,?,?,?,?,?)',
-        [Auth::id()||null, $action, $entityId, $recordId, $desc, $_SERVER['REMOTE_ADDR']??null]);
+function audit(
+    string $action,
+    ?int   $entityId,
+    ?int   $recordId,
+    string $desc,
+    array  $before = [],
+    array  $after  = []
+): void {
+    // Garante colunas before_json/after_json (migration automática, 1x por request)
+    static $ensured = false;
+    if (!$ensured) {
+        $ensured = true;
+        $cols = array_column(DB::q("SHOW COLUMNS FROM audit_log"), 'Field');
+        if (!in_array('before_json', $cols, true))
+            DB::run("ALTER TABLE audit_log ADD COLUMN before_json MEDIUMTEXT DEFAULT NULL AFTER description");
+        if (!in_array('after_json', $cols, true))
+            DB::run("ALTER TABLE audit_log ADD COLUMN after_json MEDIUMTEXT DEFAULT NULL AFTER before_json");
+        if (!in_array('reverted_by', $cols, true))
+            DB::run("ALTER TABLE audit_log ADD COLUMN reverted_by INT DEFAULT NULL AFTER after_json");
+        if (!in_array('reverted_at', $cols, true))
+            DB::run("ALTER TABLE audit_log ADD COLUMN reverted_at DATETIME DEFAULT NULL AFTER reverted_by");
+        if (!in_array('revert_of', $cols, true))
+            DB::run("ALTER TABLE audit_log ADD COLUMN revert_of INT DEFAULT NULL AFTER reverted_at");
+    }
+
+    $beforeJson = empty($before) ? null : json_encode($before, JSON_UNESCAPED_UNICODE);
+    $afterJson  = empty($after)  ? null : json_encode($after,  JSON_UNESCAPED_UNICODE);
+
+    DB::exec(
+        'INSERT INTO audit_log
+            (user_id, action, entity_id, record_id, description, before_json, after_json, ip, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        [Auth::id() ?: null, $action, $entityId, $recordId, $desc, $beforeJson, $afterJson,
+         $_SERVER['REMOTE_ADDR'] ?? null]
+    );
 }

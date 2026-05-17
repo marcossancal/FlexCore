@@ -111,6 +111,19 @@ $_navItemsNative = [
         'order'   => 41,
         'visible' => true,
     ],
+
+    // ── Auditoria ──────────────────────────────────────────────────
+    [
+        'id'      => 'audit',
+        'section' => __('nav.integrations'),
+        'label'   => 'Auditoria',
+        'url'     => '/audit',
+        'icon'    => '🔍',
+        'active'  => 'audit',
+        'roles'   => ['admin'],
+        'order'   => 43,
+        'visible' => true,
+    ],
     [
         'id'      => 'plugins',
         'section' => __('nav.integrations'),
